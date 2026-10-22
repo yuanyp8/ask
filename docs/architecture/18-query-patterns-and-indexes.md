@@ -24,7 +24,7 @@
 
 ### 分析任务队列
 条件：status IN queued/running，按 created_at 或 retry_after。
-索引：analysis_runs(project_id,status,created_at DESC)；analysis_run_steps(run_id,status,sequence_no)。
+索引：analysis_runs(project_id,status,created_at DESC)；analysis_run_steps(run_id,status,sequence_no)；过期 running step 使用 analysis_run_steps(lease_expires_at) 的 partial index。
 任务领取需要使用短事务和适当锁定策略；避免 worker 长时间持有锁。
 
 ### 章节证据
@@ -69,7 +69,7 @@ story_events 保存 canonical event；不要用其 UUID 顺序代替叙事顺序
 
 ## 5. Outbox 查询
 
-条件：status 为 pending/retryable_failed，available_at 到期，按 created_at 处理。索引：integration_outbox(status, available_at, created_at) 的 partial index。发布成功标记 published；失败按退避更新 available_at，达到上限后进入 dead_letter。auditx、SpiceDB 和检索索引消费者必须支持 dedupe_key 幂等。
+条件：status 为 pending/retryable_failed，available_at 到期，按 created_at 处理。索引：integration_outbox(status, available_at, created_at) 的 partial index；回收过期 publishing 事件使用 integration_outbox(lease_expires_at) 的 partial index。发布成功标记 published；失败按退避更新 available_at，达到上限后进入 dead_letter。auditx、SpiceDB 和检索索引消费者必须支持 dedupe_key 幂等。
 
 ## 6. 观测和优化门槛
 
