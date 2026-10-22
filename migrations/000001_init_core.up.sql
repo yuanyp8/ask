@@ -25,7 +25,7 @@ CREATE TABLE projects (
 
 CREATE TABLE project_members (
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    user_id uuid NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
     role text NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')),
     joined_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (project_id, user_id)
