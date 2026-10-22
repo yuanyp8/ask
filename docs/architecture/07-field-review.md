@@ -113,3 +113,16 @@ JSONB：仅用于模型输出中可变、特定 artifact 才使用的属性；�
 - 测试 outline node 跨树 parent 被拒绝。
 - 执行 down 后确认无遗留对象。
 - 对每个字段确认其使用者：UI、API、Worker、查询、审计或约束；无使用者的字段应删除或明确为预留字段。
+
+
+### DATA-008：拆分 canonical entity/event 与 source mention
+
+人物/事件本体是 work 级对象；原文中的每次出现是 source/split/chapter 级 mention。删除 story_entities.first_seen_chapter_id，以及 story_events.chapter_id/narrative_order/story_time_label 这类依赖单一版本的字段。新增 entity_mentions、event_mentions，保存 surface form、chapter、split version、局部顺序、叙事顺序、故事内时间和可选文本范围。故事线节点优先引用 event mention；需要跨版本统计时再聚合 canonical event。
+
+### DATA-009：Artifact scope 使用显式外键
+
+scope_type + scope_id 是无法由数据库完整校验的多态引用。SQL 草案改用 scope_chapter_id、scope_entity_id、scope_plotline_id、scope_outline_set_id，并通过 CHECK 约束要求与 scope_type 一一对应。chapter scope 必须同时绑定相同 split version。新增 scope 类型时必须更新 CHECK、外键、API DTO 和测试。
+
+### DATA-010：审计日志与 owner 事实来源
+
+项目角色以 project_members 为唯一来源，owner 角色通过唯一部分索引限制每项目最多一位；创建项目和 owner membership 在同一事务完成。增加 audit_events 保存关键变更的资源标识、操作者、动作和脱敏前后摘要。审计 payload 不保存整本正文或密钥。
