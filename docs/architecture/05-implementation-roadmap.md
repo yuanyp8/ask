@@ -2,16 +2,19 @@
 
 ## 1. Initial technology direction
 
-- Backend: Go modular monolith with explicit domain/application/repository boundaries.
+- Backend: Go modular monolith, following the existing aisphere-go/KRATOS conventions for config, logging, metrics, tracing, graceful shutdown and common infrastructure where the dependency is suitable.
 - Worker: same Go codebase, separately runnable process for asynchronous jobs.
-- Frontend: Next.js / TypeScript workspace for project home, chapter review, outline tree, entity browser, and analysis progress.
-- Transactional database: PostgreSQL.
-- File/object storage: S3-compatible interface; MinIO is suitable for self-hosted deployment.
-- Queue: start with PostgreSQL-backed jobs or an existing reliable queue adapter; avoid adding Redis/MQ solely for architecture aesthetics. Choose based on expected concurrency and deployment constraints.
-- Retrieval: keyword search first; add embeddings and reranking behind a retrieval interface once evidence retrieval is evaluated.
-- Preprocessing: define a service interface for parsing, normalization, and splitting. It can run as a separate service when independent deployment or language/runtime requirements justify it.
+- Frontend: Next.js / TypeScript.
+- Transactional database: PostgreSQL is the source of truth for business records, run/step state and outbox.
+- Runtime services: Redis for queue wake-up, locks, cache and resumable streaming state; Redis is not the sole store of durable job history.
+- File/object storage: use the existing metastoragex/objectstorex abstraction over MinIO/S3; business packages do not import storage vendor SDKs directly.
+- Identity and authorization: Casdoor OIDC + existing Kernel IAM/Authorizer + SpiceDB relationship authorization.
+- Audit: auditx is the authoritative audit service; ASK writes transactional outbox events and publishes them reliably.
+- Model gateway: new-api OpenAI-compatible API for chat, embedding and reranking; model routes and credentials remain external configuration.
+- Retrieval: structured PostgreSQL queries first, then PostgreSQL full-text search and pgvector; add reranking via new-api based on evaluation.
+- Preprocessing: service interface for parsing, normalization and splitting, with an independent process where deployment/runtime needs justify it.
 
-The technology list is a starting decision, not a reason to create a microservice for every domain.
+These are shared platform integrations, not services to reimplement inside ASK. Module boundaries do not require one deployment per module.
 
 ## 2. Suggested repository layout
 
@@ -32,8 +35,11 @@ The technology list is a starting decision, not a reason to create a microservic
     │   ├── outline/
     │   ├── reading/              # later phase
     │   ├── writing/              # later phase
-    │   ├── modelgateway/
-    │   ├── retrieval/
+    │   ├── modelgateway/          # new-api adapter
+    │   ├── retrieval/             # PostgreSQL FTS/pgvector adapters
+    │   ├── outbox/                # durable side-effect delivery
+    │   ├── authorization/         # Authorizer contract/adapter
+    │   ├── storage/               # metastoragex/objectstorex adapter
     │   └── platform/
     ├── migrations/
     ├── docs/
@@ -60,7 +66,7 @@ Keep internal packages organized by business capability. Avoid a global util pac
 
 - Review product scope and domain model.
 - Add PostgreSQL migration and migration test.
-- Add config, structured logging, health/readiness, request IDs, and graceful shutdown.
+- Reuse shared platform config, structured logging, health/readiness, request IDs, authz/audit/storage/model adapters and graceful shutdown; add the transactional outbox publisher.
 - Define repository and service interfaces.
 - Add CI for formatting, linting, unit tests, migration checks, and frontend type checks.
 
