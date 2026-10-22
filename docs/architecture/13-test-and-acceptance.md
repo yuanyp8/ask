@@ -32,6 +32,7 @@
 - 人物合并不得产生自环、循环 merge 或跨 work 引用。
 - 同一 Idempotency-Key 和相同输入返回同一 run；输入不同则冲突。
 - 重试不重复插入 artifacts、claims、events 或 aliases。
+- outbox 在业务事务回滚时不产生；业务事务提交后进程崩溃仍可投递；重复投递不重复产生外部副作用。
 - 新 source/split version 不得把旧 artifact 显示为当前有效结果。
 
 ## 3. MVP 验收
