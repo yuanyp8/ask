@@ -57,7 +57,7 @@
 - byte_size：原始字节数。
 - status：uploaded / parsing / ready / failed / archived。
 - created_by、created_at。
-- 同一 work 的重复哈希应有明确幂等策略。
+- 同一 work 的 sha256 唯一；重复上传默认复用已有 document，MVP 不支持同 work 显式副本。
 
 ### source_versions
 - id、source_document_id、work_id。
