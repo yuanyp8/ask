@@ -74,8 +74,8 @@
 - version_no：同一 source version 内递增。
 - split_config：识别规则、手工修正来源等。
 - status：draft / confirmed / superseded。
-- created_by、created_at、confirmed_at。
-- confirmed 后不允许直接修改章节边界。
+- created_by、confirmed_by、created_at、confirmed_at。
+- status=confirmed 必须有 confirmed_by 和 confirmed_at；confirmed 后不允许直接修改章节边界。
 
 ### source_chapters
 - id、split_version_id、work_id。
@@ -92,8 +92,9 @@
 
 ### analysis_runs
 - id、project_id、work_id：任务和授权范围。
+- source_document_id：文件解析任务的输入文档，可空。
 - source_version_id、split_version_id：输入版本；非源文本任务允许为空。
-- task_type：chapter_analysis / book_reverse_analysis / entity_resolution / plotline_synthesis / outline_generation / consistency_check / custom。
+- task_type：source_parse / chapter_split / chapter_analysis / book_reverse_analysis / entity_resolution / plotline_synthesis / outline_generation / consistency_check / custom。
 - status：queued / running / completed_with_warnings / succeeded / failed / cancelled。
 - idempotency_key：防止重复创建 run。
 - input_hash：服务端根据实际输入清单计算。
@@ -132,7 +133,8 @@
 - status：draft / in_review / accepted / rejected / superseded / stale。
 - run_id：生成来源。
 - supersedes_artifact_id：被此 revision 替代的产物。
-- created_by、created_at。
+- created_by、reviewed_by、reviewed_at、created_at。
+- accepted/rejected 状态必须记录审核人和审核时间。
 - 原始生成和用户编辑应保留不同 revision。
 
 ### analysis_claims
@@ -145,6 +147,7 @@
 - confidence：可选模型估计，范围 0–1，不等于真实性。
 - attributes：类型特有的附加字段。
 - reviewed_by、reviewed_at、created_at。
+- review_status 非 unreviewed 时必须记录审核人和审核时间。
 
 ### evidence_anchors
 - id、claim_id、work_id、split_version_id、chapter_id。
@@ -205,7 +208,8 @@
 - 节点至少关联事件或章节之一；关联对象必须同 work。
 
 ### outline_sets / outline_nodes
-- outline_sets：work_id、title、outline_mode、version_no、source_version_id、split_version_id、status。
+- outline_sets：work_id、title、outline_mode、version_no、source_version_id、split_version_id、status、created_by、reviewed_by、reviewed_at。
+- accepted 状态必须记录审核人和审核时间。
 - outline_mode：reverse_analysis / planned_outline。
 - outline_nodes：node_key、parent_id、node_type、title、summary、position、split_version_id、source_chapter_id、linked_event_id、attributes。源章节必须属于该 outline set 的 split version。
 - node_type：book / volume / act / story_arc / chapter / scene / beat。
