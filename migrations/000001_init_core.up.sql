@@ -2,7 +2,6 @@
 -- Requires PostgreSQL 14+.
 -- Keep source versions and confirmed split versions immutable at the application layer.
 
-BEGIN;
 
 CREATE TABLE app_users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
