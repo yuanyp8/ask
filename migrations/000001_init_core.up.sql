@@ -172,6 +172,7 @@ CREATE TABLE analysis_runs (
     status text NOT NULL DEFAULT 'queued'
         CHECK (status IN ('queued', 'running', 'completed_with_warnings', 'succeeded', 'failed', 'cancelled')),
     idempotency_key text,
+    input_hash char(64) NOT NULL CHECK (input_hash ~ '^[0-9a-f]{64}$'),
     input_manifest jsonb NOT NULL DEFAULT '{}'::jsonb,
     progress jsonb NOT NULL DEFAULT '{}'::jsonb,
     requested_options jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -274,7 +275,7 @@ CREATE TABLE analysis_run_steps (
     model_id text,
     prompt_template_id text,
     prompt_version text,
-    schema_version integer,
+    schema_version integer CHECK (schema_version IS NULL OR schema_version > 0),
     input_tokens bigint CHECK (input_tokens IS NULL OR input_tokens >= 0),
     output_tokens bigint CHECK (output_tokens IS NULL OR output_tokens >= 0),
     latency_ms bigint CHECK (latency_ms IS NULL OR latency_ms >= 0),
@@ -381,6 +382,7 @@ CREATE TABLE story_relations (
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
     source_entity_id uuid NOT NULL,
     target_entity_id uuid NOT NULL,
+    relation_key text NOT NULL,
     relation_type text NOT NULL,
     description text NOT NULL DEFAULT '',
     confidence numeric(4,3) CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
@@ -393,6 +395,7 @@ CREATE TABLE story_relations (
     FOREIGN KEY (target_entity_id, work_id)
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     CHECK (source_entity_id <> target_entity_id),
+    UNIQUE (work_id, relation_key),
     UNIQUE (id, work_id)
 );
 
@@ -492,6 +495,7 @@ CREATE TABLE analysis_claims (
     artifact_id uuid NOT NULL,
     work_id uuid NOT NULL,
     split_version_id uuid,
+    claim_key text NOT NULL,
     entity_id uuid,
     event_id uuid,
     claim_type text NOT NULL,
@@ -506,6 +510,7 @@ CREATE TABLE analysis_claims (
     reviewed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, split_version_id, work_id),
+    UNIQUE (artifact_id, claim_key),
     FOREIGN KEY (artifact_id, work_id)
         REFERENCES artifacts(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (artifact_id, split_version_id, work_id)
@@ -608,6 +613,7 @@ CREATE TABLE plotline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL,
     plotline_id uuid NOT NULL,
+    node_key text NOT NULL,
     position integer NOT NULL CHECK (position > 0),
     node_type text NOT NULL
         CHECK (node_type IN ('setup', 'development', 'turning_point', 'convergence', 'payoff', 'closure', 'other')),
@@ -618,6 +624,7 @@ CREATE TABLE plotline_nodes (
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (plotline_id, position),
+    UNIQUE (plotline_id, node_key),
     FOREIGN KEY (plotline_id, work_id)
         REFERENCES plotlines(id, work_id) ON DELETE CASCADE,
     FOREIGN KEY (event_mention_id, work_id)
@@ -667,6 +674,7 @@ CREATE TABLE outline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL,
     outline_set_id uuid NOT NULL,
+    node_key text NOT NULL,
     parent_id uuid,
     node_type text NOT NULL
         CHECK (node_type IN ('book', 'volume', 'act', 'story_arc', 'chapter', 'scene', 'beat')),
@@ -679,6 +687,7 @@ CREATE TABLE outline_nodes (
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, outline_set_id),
     UNIQUE (id, outline_set_id, work_id),
+    UNIQUE (outline_set_id, node_key),
     FOREIGN KEY (outline_set_id, work_id)
         REFERENCES outline_sets(id, work_id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id, outline_set_id, work_id)
