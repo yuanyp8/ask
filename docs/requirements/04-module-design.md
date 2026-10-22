@@ -146,7 +146,7 @@
 
 **规则**：
 - line_type 包括 main/subplot/character_arc/mystery/romance/theme/other。
-- 节点至少关联 event mention 或 chapter。
+- 节点至少关联 canonical event 或 chapter；若关联 event mention，必须同时指向同一 canonical event，并绑定同一 split version。
 - 节点顺序在故事线内唯一，node_key 用于幂等。
 - “支线无用”“作者忘记伏笔”只能作为带证据的推断，不能作为确定事实。
 - 交汇点和兑现点允许多条线关联同一事件。
