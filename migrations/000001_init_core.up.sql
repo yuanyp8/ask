@@ -417,6 +417,9 @@ CREATE TABLE story_events (
     UNIQUE (id, work_id)
 );
 
+CREATE INDEX idx_story_events_work_type_status
+    ON story_events(work_id, event_type, status);
+
 CREATE TABLE event_mentions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL,
@@ -454,6 +457,9 @@ CREATE INDEX idx_event_mentions_chapter_order
     ON event_mentions(split_version_id, chapter_id, local_order);
 CREATE INDEX idx_event_mentions_event
     ON event_mentions(work_id, event_id, narrative_order);
+
+CREATE INDEX idx_event_mentions_split_narrative_order
+    ON event_mentions(split_version_id, narrative_order);
 
 CREATE TABLE event_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
