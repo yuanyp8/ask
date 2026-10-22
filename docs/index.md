@@ -10,6 +10,7 @@
 - [平台功能拆解与验收矩阵](requirements/03-functional-decomposition.md)
 - [平台模块详细设计](requirements/04-module-design.md)
 - [需求—设计—实现追踪矩阵](requirements/05-traceability-matrix.md)
+- [小说拆解与原创设计核心功能](requirements/06-novel-analysis-design-workflows.md)
 
 ## 架构与详细设计
 
@@ -35,11 +36,17 @@
 - [19 阅读导师与原创创作域详细设计](architecture/19-reading-writing-domain.md)
 - [20 共享平台集成契约](architecture/20-shared-platform-integration.md)
 - [21 Transactional Outbox 详细设计](architecture/21-outbox-delivery.md)
+- [22 叙事知识模型与小说拆解流水线](architecture/22-narrative-knowledge-model.md)
+- [23 原创小说设计工作流](architecture/23-original-novel-design.md)
 
 ## 数据库迁移
 
 - [000001 初始化 schema](../migrations/000001_init_core.up.sql)
 - [000001 回滚 schema](../migrations/000001_init_core.down.sql)
+
+## 方法调研
+
+- [小说拆解与设计方法调研](research/01-narrative-methods-review.md)
 
 ## 当前阶段说明
 
