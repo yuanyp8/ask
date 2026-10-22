@@ -20,7 +20,7 @@ source version 是不可变产物，不提供编辑状态。解析失败应记�
 draft → confirmed → superseded
 draft → discarded（如后续需要）
 
-draft 可编辑章节标题、边界和顺序。confirmed 不允许原地修改；新修正创建新的 draft split version。被历史分析引用的 split version 不硬删除。
+draft 可编辑章节标题、边界和顺序。confirmed 不允许原地修改；新修正创建新的 draft split version。被历史分析引用的 split version 不硬删除。确认操作必须记录 confirmed_by 和 confirmed_at。
 
 ## 4. Analysis run
 
@@ -48,7 +48,7 @@ in_review → rejected
 accepted → superseded
 draft/in_review → stale（输入版本变化或依赖失效）
 
-状态和版本不是同一概念。新版本创建新 artifact revision；旧 revision 保留供比较。已接受的产物如需修改，应创建新 revision，不直接改写。
+状态和版本不是同一概念。新版本创建新 artifact revision；旧 revision 保留供比较。已接受的产物如需修改，应创建新 revision，不直接改写。accepted/rejected 的审核决定必须记录 reviewer 和 review timestamp。
 
 ## 7. Claim
 
