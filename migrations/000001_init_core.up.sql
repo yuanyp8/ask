@@ -212,24 +212,39 @@ CREATE TABLE artifacts (
     revision integer NOT NULL CHECK (revision > 0),
     scope_type text NOT NULL DEFAULT 'work'
         CHECK (scope_type IN ('work', 'chapter', 'entity', 'plotline', 'outline_set')),
-    scope_id uuid,
-    source_version_id uuid REFERENCES source_versions(id) ON DELETE RESTRICT,
-    split_version_id uuid REFERENCES split_versions(id) ON DELETE RESTRICT,
+    scope_chapter_id uuid,
+    scope_entity_id uuid,
+    scope_plotline_id uuid,
+    scope_outline_set_id uuid,
+    source_version_id uuid,
+    split_version_id uuid,
     payload_schema_version integer NOT NULL DEFAULT 1 CHECK (payload_schema_version > 0),
     payload jsonb NOT NULL DEFAULT '{}'::jsonb,
     rendered_markdown text,
     status text NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'in_review', 'accepted', 'rejected', 'superseded', 'stale')),
-    run_id uuid REFERENCES analysis_runs(id) ON DELETE SET NULL,
-    supersedes_artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+    run_id uuid,
+    supersedes_artifact_id uuid,
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, artifact_key, revision),
-    FOREIGN KEY (split_version_id, source_version_id)
-        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
+    UNIQUE (id, work_id),
+    UNIQUE (id, run_id),
+    UNIQUE (id, split_version_id, work_id),
+    FOREIGN KEY (source_version_id, work_id)
+        REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (split_version_id, source_version_id, work_id)
+        REFERENCES split_versions(id, source_version_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (run_id, work_id)
+        REFERENCES analysis_runs(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (supersedes_artifact_id, work_id)
+        REFERENCES artifacts(id, work_id) ON DELETE RESTRICT,
     CHECK (
-        (scope_type = 'work' AND scope_id IS NULL)
-        OR (scope_type <> 'work' AND scope_id IS NOT NULL)
+        (scope_type = 'work' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
+        OR (scope_type = 'chapter' AND scope_chapter_id IS NOT NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
+        OR (scope_type = 'entity' AND scope_chapter_id IS NULL AND scope_entity_id IS NOT NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
+        OR (scope_type = 'plotline' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NOT NULL AND scope_outline_set_id IS NULL)
+        OR (scope_type = 'outline_set' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NOT NULL)
     ),
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL)
 );
@@ -251,7 +266,19 @@ CREATE TABLE analysis_run_steps (
     attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
     input_json jsonb NOT NULL DEFAULT '{}'::jsonb,
     output_json jsonb NOT NULL DEFAULT '{}'::jsonb,
-    output_artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+    output_artifact_id uuid,
+    provider text,
+    model_id text,
+    prompt_template_id text,
+    prompt_version text,
+    schema_version integer,
+    input_tokens bigint CHECK (input_tokens IS NULL OR input_tokens >= 0),
+    output_tokens bigint CHECK (output_tokens IS NULL OR output_tokens >= 0),
+    latency_ms bigint CHECK (latency_ms IS NULL OR latency_ms >= 0),
+    lease_owner text,
+    lease_expires_at timestamptz,
+    heartbeat_at timestamptz,
+    retry_after timestamptz,
     error_code text,
     error_message text,
     started_at timestamptz,
@@ -259,6 +286,8 @@ CREATE TABLE analysis_run_steps (
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (run_id, step_key),
     UNIQUE (run_id, sequence_no),
+    FOREIGN KEY (output_artifact_id, run_id)
+        REFERENCES artifacts(id, run_id) ON DELETE RESTRICT,
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
 );
 
