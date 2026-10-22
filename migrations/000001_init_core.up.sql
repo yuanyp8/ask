@@ -445,6 +445,7 @@ CREATE TABLE event_mentions (
     UNIQUE (id, work_id),
     UNIQUE (id, split_version_id, work_id),
     UNIQUE (id, event_id, work_id),
+    UNIQUE (id, chapter_id, split_version_id, work_id),
     FOREIGN KEY (event_id, work_id)
         REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (chapter_id, split_version_id, work_id)
@@ -636,6 +637,8 @@ CREATE TABLE plotline_nodes (
         REFERENCES event_mentions(id, split_version_id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (event_mention_id, event_id, work_id)
         REFERENCES event_mentions(id, event_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (event_mention_id, chapter_id, split_version_id, work_id)
+        REFERENCES event_mentions(id, chapter_id, split_version_id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (chapter_id, split_version_id, work_id)
         REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
     CHECK (event_mention_id IS NULL OR (event_id IS NOT NULL AND split_version_id IS NOT NULL)),
