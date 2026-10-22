@@ -117,7 +117,7 @@ JSONB：仅用于模型输出中可变、特定 artifact 才使用的属性；�
 
 ### DATA-008：拆分 canonical entity/event 与 source mention
 
-人物/事件本体是 work 级对象；原文中的每次出现是 source/split/chapter 级 mention。删除 story_entities.first_seen_chapter_id，以及 story_events.chapter_id/narrative_order/story_time_label 这类依赖单一版本的字段。新增 entity_mentions、event_mentions，保存 surface form、chapter、split version、局部顺序、叙事顺序、故事内时间和可选文本范围。故事线节点优先引用 event mention；需要跨版本统计时再聚合 canonical event。
+人物/事件本体是 work 级对象；原文中的每次出现是 source/split/chapter 级 mention。删除 story_entities.first_seen_chapter_id，以及 story_events.chapter_id/narrative_order/story_time_label 这类依赖单一版本的字段。新增 entity_mentions、event_mentions，保存 surface form、chapter、split version、局部顺序、叙事顺序、故事内时间和可选文本范围。故事线节点支持 canonical event（适用于原创计划事件）和 event mention（适用于已存在文本中的具体出现）；同时绑定 event mention 时必须校验其 canonical event 与 split version 一致。需要跨版本统计时聚合 canonical event。
 
 ### DATA-009：Artifact scope 使用显式外键
 
