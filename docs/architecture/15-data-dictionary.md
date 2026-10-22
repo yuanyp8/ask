@@ -243,7 +243,7 @@
 
 ## 8. 尚需评审的字段
 
-- source document 去重策略是唯一约束还是允许显式副本。
+- 如需支持同 work 内显式重复副本，需设计独立 duplicate policy；当前 MVP 采用 work_id + sha256 唯一约束。
 - 章节内容是否始终在 PostgreSQL 保存，或未来改为按需读取对象存储。
 - artifact scope 是否用显式外键列，或独立 scope 关联表。
 - run progress 是持久化聚合值还是通过 step 状态实时计算。
