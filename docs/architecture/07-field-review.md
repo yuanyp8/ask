@@ -42,7 +42,7 @@ projects.owner_id 与 project_members.role='owner' 存在重复事实风险。
 - normalized_text_storage_key：规范化全文在对象存储中的不可变 key，应为必填字段。
 - parser_name/parser_version/normalization_profile：用于解释文本如何产生。
 - 文件相同但解析器版本变化，应产生新 source version，而不是覆盖旧版本。
-- work 内重复上传同一原文件应具备幂等策略，默认复用已有 document 并允许显式创建副本。
+- MVP 对同一 work 的原始文件 SHA-256 实施唯一约束；重复上传默认复用已有 document。显式副本语义暂缓，未来如需支持需引入独立 duplicate policy，而不是绕过唯一约束。
 
 ### DATA-005：多模型流水线元数据
 
