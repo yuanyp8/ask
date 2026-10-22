@@ -67,7 +67,17 @@ Save the Cat! 的 15 beats 对常见类型小说的节奏设计有帮助；Snowf
 - [Save the Cat! — How to Write a Novel](https://savethecat.com/how-to-write-a-novel)
 - [Randy Ingermanson — Snowflake Method interview](https://www.creative-writing-now.com/the-snowflake-method.html)
 
-### 2.5 中国长篇/网络连载需要额外维度
+### 2.5 量化叙事研究可提供信号，但不能裁决文学价值
+
+对约 40,000 篇传统叙事和约 20,000 篇非传统文本的计算研究，识别出传统叙事中可量化的“铺垫、情节推进、认知张力”等过程；研究没有发现遵循规范化叙事结构与作品流行度之间存在证据支持的关系。这进一步说明：结构指标可帮助定位节奏变化，不能单独判断作品是否优秀。
+
+针对中国长篇小说的研究也尝试使用章节情节波动与主要人物情绪变化识别高潮章节。此类方法适合做候选提示和辅助浏览，不应把情绪高点直接等同于叙事高潮，也不能替代因果、主题和人物命运分析。
+
+参考：
+- [The Narrative Arc: Revealing Core Narrative Structures through Text Analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC7413736/)
+- [Climax Chapter Recognition of a Chinese Novel Based on Plot Fluctuation and Main Character Sentiment](https://doi.org/10.1093/llc/fqag034)
+
+### 2.6 中国长篇/网络连载需要额外维度
 
 中国作家网关于章回体向网络文学转化的研究讨论了分卷、回目、章末悬念与连载单元；关于网络小说长度的研究则强调超长篇、人物与事件容量、场景铺排和连载媒介的影响。这意味着 ASK 需要管理“卷/篇/故事弧/章节/场景”多层结构，以及跨章节的悬念、线索和兑现关系。
 
