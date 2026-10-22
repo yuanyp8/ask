@@ -30,8 +30,8 @@ Owns author-confirmed canon, planned outlines, manuscript chapters, manuscript r
 - **Artifact:** a versioned output such as a chapter outline, book overview, entity report, or plotline analysis.
 - **Claim:** an individually reviewable statement extracted or inferred by analysis.
 - **Evidence anchor:** a location and quoted span in a specific source chapter that supports or challenges a claim.
-- **Story entity:** a character, place, organization, object, or concept.
-- **Story event:** an event in the narrative, linked to a source chapter and narrative order.
+- **Story entity:** a canonical character, place, organization, object, or concept within a work. Entity mentions record each source-specific occurrence and exact text span.
+- **Story event:** a canonical event in the story. Event mentions record the source-specific occurrence, chapter, local order, narrative order, story-time label, and optional exact text span. This separation allows the same event to be represented across different editions/split versions without storing a single chapter pointer on the canonical event.
 - **Plotline:** a story arc such as the main plot, subplot, mystery, romance, or character arc.
 - **Outline set:** a versioned hierarchical outline with an explicit semantic mode.
 - **Outline node:** a book, volume, act, story arc, chapter, scene, or beat within an outline set.
@@ -127,3 +127,8 @@ Narrative order is distinct from in-world chronology. Events may be narrated out
 - Event sourcing: do not introduce a full event-sourcing architecture for MVP; keep explicit revision/audit records for important mutations.
 - Multi-user live editing: use optimistic concurrency/version checks first.
 - Universal knowledge graph: keep the story model bounded to the current work until cross-work comparison is implemented.
+
+
+## 7. Canonical entities versus source mentions
+
+Canonical story entities/events are work-level concepts. Entity mentions and event mentions are version-specific observations in source chapters. This distinction is required for alias resolution, multiple editions, changed chapter boundaries, and traceable evidence. A source mention must never be silently rebound to a different split version.
