@@ -43,7 +43,7 @@ story_events 保存 canonical event；不要用其 UUID 顺序代替叙事顺序
 
 ### 故事线节点
 条件：plotline_id，按 position。
-索引：唯一约束 plotline_nodes(plotline_id,position) 已覆盖。
+索引：唯一约束 plotline_nodes(plotline_id,position) 已覆盖；event_id 查询需要 idx_plotline_nodes_event，event_mention_id 查询使用 idx_plotline_nodes_event_mention。
 ### 大纲树
 条件：outline_set_id + parent_id，按 position。
 索引：outline_nodes(outline_set_id,parent_id,position)；根节点使用独立 partial unique index。
