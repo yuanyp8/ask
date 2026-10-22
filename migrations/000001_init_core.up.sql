@@ -793,6 +793,8 @@ CREATE TABLE integration_outbox (
     last_error_message text,
     created_at timestamptz NOT NULL DEFAULT now(),
     published_at timestamptz,
+    FOREIGN KEY (project_id, work_id)
+        REFERENCES project_works(project_id, work_id) ON DELETE RESTRICT,
     CHECK (project_id IS NOT NULL OR work_id IS NOT NULL),
     CHECK (status <> 'published' OR published_at IS NOT NULL)
 );
