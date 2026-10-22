@@ -43,6 +43,7 @@
 - GET /projects/{project_id}/members
 - PUT /projects/{project_id}/members/{user_id}
 - DELETE /projects/{project_id}/members/{user_id}
+- POST /projects/{project_id}/transfer-ownership
 - POST /projects/{project_id}/works
 - GET /projects/{project_id}/works
 - GET /works/{work_id}
