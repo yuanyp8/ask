@@ -33,6 +33,8 @@
 - [17 部署架构](architecture/17-deployment-architecture.md)
 - [18 数据库查询模式与索引设计](architecture/18-query-patterns-and-indexes.md)
 - [19 阅读导师与原创创作域详细设计](architecture/19-reading-writing-domain.md)
+- [20 共享平台集成契约](architecture/20-shared-platform-integration.md)
+- [21 Transactional Outbox 详细设计](architecture/21-outbox-delivery.md)
 
 ## 数据库迁移
 
