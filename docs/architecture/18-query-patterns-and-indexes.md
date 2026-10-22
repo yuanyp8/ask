@@ -48,9 +48,8 @@ story_events 保存 canonical event；不要用其 UUID 顺序代替叙事顺序
 条件：outline_set_id + parent_id，按 position。
 索引：outline_nodes(outline_set_id,parent_id,position)；根节点使用独立 partial unique index。
 
-### 审计记录
-条件：project_id 或 work_id，按 created_at 倒序。
-索引：audit_events(project_id,created_at DESC)、audit_events(work_id,created_at DESC)。
+### 审计与外部投递
+审计历史由 auditx 查询；ASK 本地只查询 integration_outbox 的待投递/失败记录。索引：integration_outbox(status,available_at,created_at)、integration_outbox(project_id,created_at DESC)、integration_outbox(work_id,created_at DESC)。
 
 ## 3. 分页
 
@@ -68,7 +67,11 @@ story_events 保存 canonical event；不要用其 UUID 顺序代替叙事顺序
 - 向量索引记录 embedding model/version、文本 chunk 版本和源锚点；模型变更必须重建或并行维护新索引。
 - 检索结果必须能回到 source version、split version、chapter 和文本范围。
 
-## 5. 观测和优化门槛
+## 5. Outbox 查询
+
+条件：status 为 pending/retryable_failed，available_at 到期，按 created_at 处理。索引：integration_outbox(status, available_at, created_at) 的 partial index。发布成功标记 published；失败按退避更新 available_at，达到上限后进入 dead_letter。auditx、SpiceDB 和检索索引消费者必须支持 dedupe_key 幂等。
+
+## 6. 观测和优化门槛
 
 - 对超过阈值的查询记录 query fingerprint、耗时、rows、buffers，不记录正文参数。
 - 先看查询计划和数据量，再决定增加索引或物化视图。
