@@ -29,7 +29,7 @@
 
 **页面**：上传向导、导入历史、解析诊断、版本列表。
 
-**核心数据**：source_documents、source_versions、audit_events。
+**核心数据**：source_documents、source_versions、integration_outbox；审计投递到 auditx。
 
 **输入**：文件、作品 ID、格式选项、规范化配置。
 
@@ -178,7 +178,7 @@
 
 **页面**：证据侧栏、结论审核队列、引用验证错误视图。
 
-**核心数据**：analysis_claims、evidence_anchors、audit_events。
+**核心数据**：analysis_claims、evidence_anchors、integration_outbox；审计事实由 auditx 保存。
 
 **规则**：
 - explicit/inferred/speculative 与 review_status 分开。
