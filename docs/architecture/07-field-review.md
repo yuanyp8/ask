@@ -125,4 +125,4 @@ scope_type + scope_id 是无法由数据库完整校验的多态引用。SQL 草
 
 ### DATA-010：审计日志与 owner 事实来源
 
-项目角色以 project_members 为唯一来源，owner 角色通过唯一部分索引限制每项目最多一位；创建项目和 owner membership 在同一事务完成。增加 audit_events 保存关键变更的资源标识、操作者、动作和脱敏前后摘要。审计 payload 不保存整本正文或密钥。
+项目角色以 project_members 为唯一来源，owner 角色通过唯一部分索引限制每项目最多一位；创建项目和 owner membership 在同一事务完成。不在 ASK 数据库建立竞争性的 audit_events 主表。关键变更与业务数据同事务写入 integration_outbox，再投递到 auditx；outbox 保存脱敏事件 payload 和投递状态，不保存整本正文或密钥。
