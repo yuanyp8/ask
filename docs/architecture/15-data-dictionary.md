@@ -164,7 +164,6 @@
 - normalized_name：用于检索和匹配的规范化名称。
 - description：人工或模型生成的简介，需记录来源/审核状态。
 - attributes：人物目标、弱点、秘密等类型扩展字段。
-- first_seen_chapter_id：首次出现候选位置。
 - status：active / merged / archived。
 - merged_into_entity_id：仅 status=merged 时非空，必须同 work。
 - created_at / updated_at。
@@ -184,12 +183,10 @@
 
 ### story_events
 - id、work_id、event_key。
-- chapter_id：来源章节。
 - event_type、summary。
-- narrative_order：叙事呈现顺序。
-- story_time_label：原文描述的故事内时间。
-- story_time_sort_key：仅在可可靠排序时使用。
+- origin_type：source_analysis / planned / manual，表示对象最初的产生方式。
 - attributes、status、created_at。
+- 不保存单一 chapter_id 或 narrative_order；这些是具体文本版本中的出现位置，应存入 event_mentions。
 - 事件去重键必须在同一 work 内稳定；不能用摘要字符串作为唯一身份。
 
 ### event_relations
@@ -201,7 +198,7 @@
 ### plotlines / plotline_nodes
 - plotlines：line_key、title、line_type、description、goal、resolution、confidence、status、attributes。
 - line_type：main / subplot / character_arc / mystery / romance / theme / other。
-- plotline_nodes：position、node_type、event_id、chapter_id、summary、narrative_function。
+- plotline_nodes：position、node_type、event_mention_id、chapter_id、summary、narrative_function。
 - node_type：setup / development / turning_point / convergence / payoff / closure / other。
 - 节点至少关联事件或章节之一；关联对象必须同 work。
 
@@ -212,6 +209,29 @@
 - node_type：book / volume / act / story_arc / chapter / scene / beat。
 - parent 必须属于同一 outline_set；移动节点不能形成循环。
 - accepted outline set 不原地修改，编辑时创建新草稿版本。
+
+### entity_mentions
+- id、work_id、entity_id、split_version_id、chapter_id。
+- mention_key：本次 run 范围内的幂等键。
+- surface_form / normalized_surface：原文称呼与规范化形式。
+- mention_start_char / mention_end_char：章节局部字符范围。
+- mention_role：name / alias / pronoun / title / reference / unknown。
+- confidence、resolution_status、run_id、created_at。
+- mention 是某个具体版本中的观察，不是 canonical entity 的替代物。
+
+### event_mentions
+- id、work_id、event_id、split_version_id、chapter_id。
+- mention_key、local_order、narrative_order。
+- story_time_label / story_time_sort_key：来源版本中的故事内时间描述及可选排序值。
+- mention_start_char / mention_end_char：可选的章节局部范围。
+- confidence、status、run_id、created_at。
+- 同一 canonical event 可在不同 split version 中有多个 mention；排序值不得放在 canonical story_events 上。
+
+### audit_events
+- id、project_id、work_id、actor_id。
+- action、resource_type、resource_id。
+- change_summary：脱敏的变更摘要，不保存完整正文。
+- request_id、created_at。
 
 ## 7. 后续域
 
