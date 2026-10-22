@@ -43,15 +43,17 @@ Runs are execution records; artifacts are durable output revisions. Claims are r
 
 - story_entities
 - entity_aliases
+- entity_mentions
 - story_relations
 - story_events
+- event_mentions
 - event_relations
 - plotlines
 - plotline_nodes
 - outline_sets
 - outline_nodes
 
-Use explicit edge tables for entity and event relationships. A plotline node may point to a chapter, event, or both. Outline nodes form a tree within one outline set.
+Use explicit edge tables for entity and event relationships. Canonical entities/events are separate from source-specific entity_mentions/event_mentions. Plotline nodes link to an event mention or a chapter, so ordering remains tied to a particular split version. Outline nodes form a tree within one outline set.
 
 ## 3. Keys and naming
 
@@ -163,3 +165,8 @@ Some cross-object checks still belong in the application service because the rel
 The SQL files intentionally do not contain explicit BEGIN/COMMIT statements. The migration runner should own transaction boundaries, avoiding nested or prematurely committed transactions. The initial schema targets PostgreSQL 14 or newer.
 
 Before the migration is considered complete, execute both up and down migrations against a clean PostgreSQL instance and run integration checks for foreign keys, check constraints, unique constraints, and rollback order.
+
+
+## 10. Canonical object and mention normalization
+
+The current SQL draft separates canonical story_entities/story_events from entity_mentions/event_mentions. This prevents a canonical event from being pinned to one edition's chapter number or narrative order. Mentions carry work_id, split_version_id, chapter_id, run_id, local ordering, offsets, and resolution status. Canonical events carry stable work-level identity; event_relations connect canonical events, while plotline_nodes use event mentions when the exact source occurrence matters.
