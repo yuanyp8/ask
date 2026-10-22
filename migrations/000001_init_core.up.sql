@@ -306,14 +306,11 @@ CREATE TABLE story_entities (
     normalized_name text NOT NULL,
     description text NOT NULL DEFAULT '',
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
-    first_seen_chapter_id uuid,
     status text NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'merged', 'archived')),
     merged_into_entity_id uuid,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-    FOREIGN KEY (first_seen_chapter_id, work_id)
-        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (merged_into_entity_id, work_id)
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     CHECK (merged_into_entity_id IS NULL OR merged_into_entity_id <> id),
@@ -346,6 +343,39 @@ CREATE TABLE entity_aliases (
 CREATE INDEX idx_entity_aliases_normalized
     ON entity_aliases(work_id, normalized_alias);
 
+CREATE TABLE entity_mentions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    work_id uuid NOT NULL,
+    entity_id uuid NOT NULL,
+    split_version_id uuid NOT NULL,
+    chapter_id uuid NOT NULL,
+    mention_key text NOT NULL,
+    surface_form text NOT NULL,
+    normalized_surface text NOT NULL,
+    mention_start_char integer NOT NULL CHECK (mention_start_char >= 0),
+    mention_end_char integer NOT NULL CHECK (mention_end_char > mention_start_char),
+    mention_role text NOT NULL DEFAULT 'reference'
+        CHECK (mention_role IN ('name', 'alias', 'pronoun', 'title', 'reference', 'unknown')),
+    confidence numeric(4,3) CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
+    resolution_status text NOT NULL DEFAULT 'candidate'
+        CHECK (resolution_status IN ('candidate', 'resolved', 'rejected', 'ambiguous')),
+    run_id uuid,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (run_id, mention_key),
+    UNIQUE (id, work_id),
+    FOREIGN KEY (entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (run_id, work_id)
+        REFERENCES analysis_runs(id, work_id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_entity_mentions_chapter_span
+    ON entity_mentions(split_version_id, chapter_id, mention_start_char);
+CREATE INDEX idx_entity_mentions_entity
+    ON entity_mentions(work_id, entity_id, split_version_id);
+
 CREATE TABLE story_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
@@ -375,25 +405,55 @@ CREATE TABLE story_events (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
     event_key text NOT NULL,
-    chapter_id uuid,
     event_type text NOT NULL DEFAULT 'other',
     summary text NOT NULL,
-    narrative_order bigint NOT NULL,
-    story_time_label text,
+    origin_type text NOT NULL DEFAULT 'source_analysis'
+        CHECK (origin_type IN ('source_analysis', 'planned', 'manual')),
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     status text NOT NULL DEFAULT 'candidate'
         CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, event_key),
-    UNIQUE (id, work_id),
-    FOREIGN KEY (chapter_id, work_id)
-        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT
+    UNIQUE (id, work_id)
 );
 
-CREATE INDEX idx_story_events_work_order
-    ON story_events(work_id, narrative_order);
-CREATE INDEX idx_story_events_chapter
-    ON story_events(chapter_id);
+CREATE TABLE event_mentions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    work_id uuid NOT NULL,
+    event_id uuid NOT NULL,
+    split_version_id uuid NOT NULL,
+    chapter_id uuid NOT NULL,
+    mention_key text NOT NULL,
+    local_order integer NOT NULL CHECK (local_order > 0),
+    narrative_order bigint NOT NULL,
+    story_time_label text,
+    story_time_sort_key numeric,
+    mention_start_char integer,
+    mention_end_char integer,
+    confidence numeric(4,3) CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
+    status text NOT NULL DEFAULT 'candidate'
+        CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
+    run_id uuid,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (run_id, mention_key),
+    UNIQUE (id, work_id),
+    UNIQUE (id, split_version_id, work_id),
+    FOREIGN KEY (event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (run_id, work_id)
+        REFERENCES analysis_runs(id, work_id) ON DELETE RESTRICT,
+    CHECK (
+        (mention_start_char IS NULL AND mention_end_char IS NULL)
+        OR (mention_start_char >= 0 AND mention_end_char > mention_start_char)
+    )
+);
+
+CREATE INDEX idx_event_mentions_chapter_order
+    ON event_mentions(split_version_id, chapter_id, local_order);
+CREATE INDEX idx_event_mentions_event
+    ON event_mentions(work_id, event_id, narrative_order);
 
 CREATE TABLE event_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -545,7 +605,7 @@ CREATE TABLE plotline_nodes (
     position integer NOT NULL CHECK (position > 0),
     node_type text NOT NULL
         CHECK (node_type IN ('setup', 'development', 'turning_point', 'convergence', 'payoff', 'closure', 'other')),
-    event_id uuid,
+    event_mention_id uuid,
     chapter_id uuid,
     summary text NOT NULL DEFAULT '',
     narrative_function text NOT NULL DEFAULT '',
@@ -554,16 +614,16 @@ CREATE TABLE plotline_nodes (
     UNIQUE (plotline_id, position),
     FOREIGN KEY (plotline_id, work_id)
         REFERENCES plotlines(id, work_id) ON DELETE CASCADE,
-    FOREIGN KEY (event_id, work_id)
-        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (event_mention_id, work_id)
+        REFERENCES event_mentions(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (chapter_id, work_id)
         REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
-    CHECK (event_id IS NOT NULL OR chapter_id IS NOT NULL)
+    CHECK (event_mention_id IS NOT NULL OR chapter_id IS NOT NULL)
 );
 
-CREATE INDEX idx_plotline_nodes_event
-    ON plotline_nodes(event_id)
-    WHERE event_id IS NOT NULL;
+CREATE INDEX idx_plotline_nodes_event_mention
+    ON plotline_nodes(event_mention_id)
+    WHERE event_mention_id IS NOT NULL;
 CREATE INDEX idx_plotline_nodes_chapter
     ON plotline_nodes(chapter_id)
     WHERE chapter_id IS NOT NULL;
