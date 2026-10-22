@@ -5,7 +5,7 @@
 
 CREATE TABLE app_users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    external_subject text UNIQUE,
+    iam_subject_id text NOT NULL UNIQUE,
     display_name text NOT NULL,
     email text,
     created_at timestamptz NOT NULL DEFAULT now()
@@ -770,23 +770,34 @@ CREATE INDEX idx_artifacts_scope_plotline
 CREATE INDEX idx_artifacts_scope_outline_set
     ON artifacts(scope_outline_set_id) WHERE scope_outline_set_id IS NOT NULL;
 
-CREATE TABLE audit_events (
+CREATE TABLE integration_outbox (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    dedupe_key text NOT NULL UNIQUE,
+    aggregate_type text NOT NULL,
+    aggregate_id uuid NOT NULL,
+    event_type text NOT NULL,
     project_id uuid REFERENCES projects(id) ON DELETE RESTRICT,
     work_id uuid REFERENCES works(id) ON DELETE RESTRICT,
-    actor_id uuid REFERENCES app_users(id) ON DELETE SET NULL,
-    action text NOT NULL,
-    resource_type text NOT NULL,
-    resource_id uuid,
-    change_summary jsonb NOT NULL DEFAULT '{}'::jsonb,
-    request_id text,
+    schema_version integer NOT NULL DEFAULT 1 CHECK (schema_version > 0),
+    payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+    status text NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'publishing', 'published', 'retryable_failed', 'dead_letter')),
+    attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+    available_at timestamptz NOT NULL DEFAULT now(),
+    lease_owner text,
+    lease_expires_at timestamptz,
+    last_error_code text,
+    last_error_message text,
     created_at timestamptz NOT NULL DEFAULT now(),
-    CHECK (project_id IS NOT NULL OR work_id IS NOT NULL)
+    published_at timestamptz,
+    CHECK (project_id IS NOT NULL OR work_id IS NOT NULL),
+    CHECK (status <> 'published' OR published_at IS NOT NULL)
 );
 
-CREATE INDEX idx_audit_events_project_created
-    ON audit_events(project_id, created_at DESC) WHERE project_id IS NOT NULL;
-CREATE INDEX idx_audit_events_work_created
-    ON audit_events(work_id, created_at DESC) WHERE work_id IS NOT NULL;
-CREATE INDEX idx_audit_events_actor_created
-    ON audit_events(actor_id, created_at DESC) WHERE actor_id IS NOT NULL;
+CREATE INDEX idx_integration_outbox_pending
+    ON integration_outbox(status, available_at, created_at)
+    WHERE status IN ('pending', 'retryable_failed', 'publishing');
+CREATE INDEX idx_integration_outbox_project
+    ON integration_outbox(project_id, created_at DESC) WHERE project_id IS NOT NULL;
+CREATE INDEX idx_integration_outbox_work
+    ON integration_outbox(work_id, created_at DESC) WHERE work_id IS NOT NULL;
