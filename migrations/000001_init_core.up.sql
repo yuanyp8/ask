@@ -629,3 +629,27 @@ CREATE UNIQUE INDEX uq_outline_nodes_root_position
 CREATE INDEX idx_outline_nodes_parent
     ON outline_nodes(outline_set_id, parent_id, position);
 
+-- Polymorphic artifact scope is represented by explicit FK columns and constrained above.
+-- Add these FKs after all target tables have been created.
+ALTER TABLE artifacts
+    ADD CONSTRAINT fk_artifacts_scope_chapter
+        FOREIGN KEY (scope_chapter_id, work_id)
+        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_artifacts_scope_entity
+        FOREIGN KEY (scope_entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_artifacts_scope_plotline
+        FOREIGN KEY (scope_plotline_id, work_id)
+        REFERENCES plotlines(id, work_id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_artifacts_scope_outline_set
+        FOREIGN KEY (scope_outline_set_id, work_id)
+        REFERENCES outline_sets(id, work_id) ON DELETE RESTRICT;
+
+CREATE INDEX idx_artifacts_scope_chapter
+    ON artifacts(scope_chapter_id) WHERE scope_chapter_id IS NOT NULL;
+CREATE INDEX idx_artifacts_scope_entity
+    ON artifacts(scope_entity_id) WHERE scope_entity_id IS NOT NULL;
+CREATE INDEX idx_artifacts_scope_plotline
+    ON artifacts(scope_plotline_id) WHERE scope_plotline_id IS NOT NULL;
+CREATE INDEX idx_artifacts_scope_outline_set
+    ON artifacts(scope_outline_set_id) WHERE scope_outline_set_id IS NOT NULL;
