@@ -103,7 +103,7 @@ Prior artifacts remain immutable history and are marked stale for the new input 
 
 ## 5. Model gateway contract
 
-The analysis domain calls a provider-neutral interface. It should support:
+The analysis domain calls a provider-neutral ModelGateway interface; the default platform adapter is new-api's OpenAI-compatible endpoint. It should support:
 - structured JSON output with schema validation;
 - timeout and cancellation;
 - retry classification;
@@ -112,7 +112,7 @@ The analysis domain calls a provider-neutral interface. It should support:
 - configurable concurrency and rate limits;
 - redacted logs that do not leak full manuscript text by default.
 
-Do not bind persisted artifacts to one provider's response format. Store normalized domain payloads plus minimal provider metadata.
+Do not bind persisted artifacts to one provider's response format. Store normalized domain payloads plus minimal provider metadata. Embedding and reranking calls also go through new-api; persist the logical route and resolved model/version where available, not provider credentials.
 
 ## 6. Human review
 
