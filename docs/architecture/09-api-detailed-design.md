@@ -11,7 +11,7 @@
 - 列表使用 cursor pagination；cursor 应是不透明值。
 - 修改有并发风险的资源时，要求 expected_revision 或 If-Match。
 - 创建异步任务返回 202 Accepted。
-- 所有资源访问验证 project membership 和 work 与 project 的关联。
+- 所有资源访问先从可信认证上下文取得 Principal，再调用统一 Authorizer/IAM 检查 action/resource；同时校验 work 与 project 的关联。project_members 是产品成员元数据并通过 integration_outbox 投影到 SpiceDB；UUID 不可预测性不是授权。
 - API DTO 与数据库实体分离，禁止把数据库行直接序列化给客户端。
 
 ## 2. 统一响应与错误
@@ -49,7 +49,7 @@
 - GET /works/{work_id}
 - PATCH /works/{work_id}
 
-项目创建必须在一个事务内建立项目和 owner 成员。不能通过客户端提交 role=owner 来转移所有权；所有权变更使用独立授权操作。
+项目创建必须在一个事务内建立项目和 owner 成员。不能通过客户端提交 role=owner 来转移所有权；所有权变更使用独立授权操作。成员关系变更同事务写入 integration_outbox，再投影到 SpiceDB。
 
 ## 4. 文件导入和版本
 
