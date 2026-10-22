@@ -2,9 +2,9 @@
 
 ## 1. Product definition
 
-ASK is a structured workspace for reverse-engineering existing novels, guided reading, and AI-assisted long-form fiction writing. Its core asset is a versioned story model—not a chat transcript.
+ASK is a structured workspace for reverse-engineering existing novels and designing coherent original long-form fiction. Its core asset is a versioned narrative model—not a chat transcript. Reading tutoring and manuscript drafting build on this foundation.
 
-The first release validates the reverse-analysis path. Reading and writing features reuse the same source, evidence, entity, event, outline, and asynchronous-task foundations.
+The first release validates two connected paths: evidence-backed reverse analysis of an existing novel, and structured forward design of an original novel. Full manuscript generation and advanced reading-tutor features follow later. Both paths reuse the same entity, event, plotline, outline, version and task foundations, while keeping source facts separate from planned fiction.
 
 ## 2. Primary users and jobs
 
@@ -24,6 +24,8 @@ The first release validates the reverse-analysis path. Reading and writing featu
 8. Consolidate entities across chapters and create candidate relations and plotlines.
 9. Store claims and link them to verifiable source anchors.
 10. Show results in an editable UI. User edits and review decisions must persist independently from the original AI output.
+11. Create an original work without an uploaded source; define a creative brief, premise, characters, causal event spine, plotlines and a planned outline.
+12. Run basic design diagnostics for missing causal dependencies, character-motivation conflicts, timeline conflicts and unresolved threads; diagnostics are suggestions, not automatic rewrites.
 
 ## 4. MVP acceptance criteria
 
@@ -47,14 +49,16 @@ The first release validates the reverse-analysis path. Reading and writing featu
 - Chapter-level analysis and book-level synthesis.
 - Character/entity extraction, event extraction, candidate relations, plotline candidates and outline artifacts.
 - Evidence anchors, human review, version provenance and async job status.
-- Basic project/work management and a functional analysis UI.
+- Original novel design workbench: creative brief, multiple story concepts, character/relationship model, planned events, plotlines and a hierarchical outline.
+- Basic design diagnostics and change-impact warnings.
+- Basic project/work management and a functional analysis/design UI.
 
 ### Deferred
 
 - OCR-heavy PDF ingestion.
 - Public publishing, collaboration comments, billing and marketplace features.
 - Dedicated graph database.
-- Autonomous full-novel generation and multi-agent free-form writing.
+- Autonomous full-novel generation, chapter-by-chapter manuscript production and multi-agent free-form writing.
 - Advanced semantic comparison across a large library.
 - Fine-grained collaborative editing and real-time multi-user cursors.
 
