@@ -200,14 +200,14 @@
 ### plotlines / plotline_nodes
 - plotlines：line_key、title、line_type、description、goal、resolution、confidence、status、attributes。
 - line_type：main / subplot / character_arc / mystery / romance / theme / other。
-- plotline_nodes：node_key、position、node_type、event_mention_id、chapter_id、summary、narrative_function。
+- plotline_nodes：node_key、position、node_type、event_id、event_mention_id、split_version_id、chapter_id、summary、narrative_function。event_id 支持计划事件；event_mention_id 用于绑定特定源版本中的具体出现。
 - node_type：setup / development / turning_point / convergence / payoff / closure / other。
 - 节点至少关联事件或章节之一；关联对象必须同 work。
 
 ### outline_sets / outline_nodes
 - outline_sets：work_id、title、outline_mode、version_no、source_version_id、split_version_id、status。
 - outline_mode：reverse_analysis / planned_outline。
-- outline_nodes：node_key、parent_id、node_type、title、summary、position、source_chapter_id、linked_event_id、attributes。
+- outline_nodes：node_key、parent_id、node_type、title、summary、position、split_version_id、source_chapter_id、linked_event_id、attributes。源章节必须属于该 outline set 的 split version。
 - node_type：book / volume / act / story_arc / chapter / scene / beat。
 - parent 必须属于同一 outline_set；移动节点不能形成循环。
 - accepted outline set 不原地修改，编辑时创建新草稿版本。
