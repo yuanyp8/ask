@@ -444,6 +444,7 @@ CREATE TABLE event_mentions (
     UNIQUE (run_id, mention_key),
     UNIQUE (id, work_id),
     UNIQUE (id, split_version_id, work_id),
+    UNIQUE (id, event_id, work_id),
     FOREIGN KEY (event_id, work_id)
         REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (chapter_id, split_version_id, work_id)
@@ -617,7 +618,9 @@ CREATE TABLE plotline_nodes (
     position integer NOT NULL CHECK (position > 0),
     node_type text NOT NULL
         CHECK (node_type IN ('setup', 'development', 'turning_point', 'convergence', 'payoff', 'closure', 'other')),
+    event_id uuid,
     event_mention_id uuid,
+    split_version_id uuid,
     chapter_id uuid,
     summary text NOT NULL DEFAULT '',
     narrative_function text NOT NULL DEFAULT '',
@@ -627,11 +630,17 @@ CREATE TABLE plotline_nodes (
     UNIQUE (plotline_id, node_key),
     FOREIGN KEY (plotline_id, work_id)
         REFERENCES plotlines(id, work_id) ON DELETE CASCADE,
-    FOREIGN KEY (event_mention_id, work_id)
-        REFERENCES event_mentions(id, work_id) ON DELETE RESTRICT,
-    FOREIGN KEY (chapter_id, work_id)
-        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
-    CHECK (event_mention_id IS NOT NULL OR chapter_id IS NOT NULL)
+    FOREIGN KEY (event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (event_mention_id, split_version_id, work_id)
+        REFERENCES event_mentions(id, split_version_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (event_mention_id, event_id, work_id)
+        REFERENCES event_mentions(id, event_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
+    CHECK (event_mention_id IS NULL OR (event_id IS NOT NULL AND split_version_id IS NOT NULL)),
+    CHECK (chapter_id IS NULL OR split_version_id IS NOT NULL),
+    CHECK (event_id IS NOT NULL OR chapter_id IS NOT NULL)
 );
 
 CREATE INDEX idx_plotline_nodes_event_mention
