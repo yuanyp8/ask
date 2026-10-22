@@ -2,7 +2,7 @@
 
 ## 1. Storage strategy
 
-PostgreSQL is the transactional source of truth for projects, works, source metadata, chapters, analysis state, story entities, relations, events, plotlines, outlines, claims, and evidence anchors.
+PostgreSQL is the transactional source of truth for projects, works, source metadata, chapters, analysis state, story entities, relations, events, plotlines, outlines, claims, evidence anchors, and pending integration-outbox delivery state. Authentication identity is owned by the shared IAM service; audit history is owned by auditx.
 
 Object storage holds original uploads and may hold large intermediate exports. The first implementation stores normalized chapter text in PostgreSQL so the reader, evidence viewer, and analysis worker can share stable chapter IDs and offsets. If corpus scale later makes this expensive, chapter text can move behind a content repository interface without changing domain IDs.
 
@@ -12,13 +12,13 @@ Use JSONB for evolving model payloads, source metadata, attributes, input manife
 
 ### Identity and workspace
 
-- app_users
+- app_users (internal subject mapping)
 - projects
 - project_members
 - works
 - project_works
 
-A project owns access control. A work represents the intellectual work. project_works links them and supports primary, reference, and inspiration roles.
+Casdoor OIDC and Kernel IAM provide identity; app_users maps the trusted IAM subject to an ASK-local ID. project_members stores product membership metadata and changes are projected to SpiceDB via integration_outbox. A work represents the intellectual work. project_works links them and supports primary, reference, and inspiration roles.
 
 ### Source and segmentation
 
@@ -33,6 +33,7 @@ A source version is produced by a parser/normalizer. A split version records a c
 
 - analysis_runs
 - analysis_run_steps
+- integration_outbox
 - artifacts
 - analysis_claims
 - evidence_anchors
@@ -53,7 +54,7 @@ Runs are execution records; artifacts are durable output revisions. Claims are r
 - outline_sets
 - outline_nodes
 
-Use explicit edge tables for entity and event relationships. Canonical entities/events are separate from source-specific entity_mentions/event_mentions. Plotline nodes link to an event mention or a chapter, so ordering remains tied to a particular split version. Outline nodes form a tree within one outline set.
+Use explicit edge tables for entity and event relationships. Canonical entities/events are separate from source-specific entity_mentions/event_mentions. Plotline nodes can link to a canonical event for planned creative arcs, and optionally to a source-specific event mention/chapter for reverse analysis; source-specific links must match the same split version. Outline nodes form a tree within one outline set.
 
 ## 3. Keys and naming
 
