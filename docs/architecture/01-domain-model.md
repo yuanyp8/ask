@@ -14,9 +14,13 @@ Owns entities, aliases, relations, events, event relations, plotlines, outline s
 
 Owns analysis runs, step state, idempotency, model/prompt provenance, artifacts, validation, retries, cancellation, and incremental recomputation.
 
-### Writing domain (later phase)
+### Creative design domain (P0)
 
-Owns author-confirmed canon, planned outlines, manuscript chapters, manuscript revisions, and consistency findings. It reuses entities and structure primitives where semantics match, but does not treat generated draft text as published-source evidence.
+Owns creative brief, story concepts, character/relationship design, planned events, plotlines, planned outline sets, design constraints and design diagnostics. It reuses entity/event/outline primitives while keeping planned events distinct from events extracted from published source text.
+
+### Manuscript writing domain (later phase)
+
+Owns manuscript chapters, manuscript revisions, accepted prose and fine-grained consistency findings. It reuses creative design and Canon, but does not treat generated draft text as published-source evidence.
 
 ## 2. Core terms
 
