@@ -137,6 +137,7 @@
 
 ### analysis_claims
 - id、artifact_id、work_id。
+- claim_key：同一 artifact 内的稳定幂等键。
 - claim_type、claim_text。
 - entity_id 或 event_id：可选的主要关联对象；不能通过未校验的自由文本代替关联。
 - epistemic_status：explicit / inferred / speculative。
@@ -176,6 +177,7 @@
 
 ### story_relations
 - id、work_id、source_entity_id、target_entity_id。
+- relation_key：服务端生成的稳定幂等键。
 - relation_type：可扩展的关系类型，需统一字典。
 - description、confidence、attributes。
 - status：candidate / accepted / rejected / archived。
@@ -198,14 +200,14 @@
 ### plotlines / plotline_nodes
 - plotlines：line_key、title、line_type、description、goal、resolution、confidence、status、attributes。
 - line_type：main / subplot / character_arc / mystery / romance / theme / other。
-- plotline_nodes：position、node_type、event_mention_id、chapter_id、summary、narrative_function。
+- plotline_nodes：node_key、position、node_type、event_mention_id、chapter_id、summary、narrative_function。
 - node_type：setup / development / turning_point / convergence / payoff / closure / other。
 - 节点至少关联事件或章节之一；关联对象必须同 work。
 
 ### outline_sets / outline_nodes
 - outline_sets：work_id、title、outline_mode、version_no、source_version_id、split_version_id、status。
 - outline_mode：reverse_analysis / planned_outline。
-- outline_nodes：parent_id、node_type、title、summary、position、source_chapter_id、linked_event_id、attributes。
+- outline_nodes：node_key、parent_id、node_type、title、summary、position、source_chapter_id、linked_event_id、attributes。
 - node_type：book / volume / act / story_arc / chapter / scene / beat。
 - parent 必须属于同一 outline_set；移动节点不能形成循环。
 - accepted outline set 不原地修改，编辑时创建新草稿版本。
