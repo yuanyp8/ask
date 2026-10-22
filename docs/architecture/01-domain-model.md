@@ -80,7 +80,7 @@ Every run records:
 - work and project;
 - source and split versions, when source-based;
 - task type and requested scope;
-- model identifier and prompt/template version;
+- pipeline version, execution profile, idempotency key, input hash and input manifest; model/provider/prompt/schema metadata is recorded per run step because a pipeline may use multiple models.
 - idempotency key and input manifest;
 - status, progress, errors, and timestamps.
 
