@@ -144,3 +144,22 @@ Add full-text or vector indexes only after retrieval requirements and query patt
 - Deleting or replacing an upload must not remove historical source versions referenced by completed runs.
 - Source retention and user-initiated permanent deletion need an explicit service-level workflow that removes object storage data and dependent records safely.
 - Cascades are suitable for purely owned child rows such as run steps, aliases, or nodes; they are not suitable for shared works or immutable source history.
+
+
+## 8. Cross-object integrity enforced by the database
+
+The initial migration uses composite foreign keys where they protect important semantic boundaries:
+
+- Analysis runs, artifacts, and outline sets cannot pair a split version with a different source version.
+- Entity relations cannot connect entities from different works.
+- Event relations cannot connect events from different works.
+- An outline node's parent must belong to the same outline set, so one outline tree cannot accidentally contain a node from another version.
+- Entity merge targets must belong to the same work.
+
+Some cross-object checks still belong in the application service because the relevant ownership path crosses multiple tables, such as verifying that an evidence anchor's chapter belongs to the same work and split version as its artifact. The service must validate these conditions in the same transaction that persists the mutation.
+
+## 9. Migration execution
+
+The SQL files intentionally do not contain explicit BEGIN/COMMIT statements. The migration runner should own transaction boundaries, avoiding nested or prematurely committed transactions. The initial schema targets PostgreSQL 14 or newer.
+
+Before the migration is considered complete, execute both up and down migrations against a clean PostgreSQL instance and run integration checks for foreign keys, check constraints, unique constraints, and rollback order.
