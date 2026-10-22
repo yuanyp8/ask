@@ -119,6 +119,7 @@ CREATE TABLE source_chapters (
     char_count integer NOT NULL CHECK (char_count >= 0),
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (split_version_id, chapter_no),
+    CHECK (char_count = char_length(content_text)),
     CHECK (
         (start_offset IS NULL AND end_offset IS NULL)
         OR (start_offset >= 0 AND end_offset >= start_offset)
@@ -257,7 +258,10 @@ CREATE TABLE story_entities (
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
     CHECK (merged_into_entity_id IS NULL OR merged_into_entity_id <> id),
-    CHECK (status = 'merged' OR merged_into_entity_id IS NULL)
+    CHECK (
+        (status = 'merged' AND merged_into_entity_id IS NOT NULL)
+        OR (status <> 'merged' AND merged_into_entity_id IS NULL)
+    )
 );
 
 CREATE INDEX idx_story_entities_work_type_name
