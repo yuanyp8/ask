@@ -16,8 +16,10 @@ DROP TABLE IF EXISTS artifacts;
 DROP TABLE IF EXISTS outline_sets;
 DROP TABLE IF EXISTS plotlines;
 DROP TABLE IF EXISTS event_relations;
+DROP TABLE IF EXISTS event_mentions;
 DROP TABLE IF EXISTS story_events;
 DROP TABLE IF EXISTS story_relations;
+DROP TABLE IF EXISTS entity_mentions;
 DROP TABLE IF EXISTS entity_aliases;
 DROP TABLE IF EXISTS story_entities;
 
