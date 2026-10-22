@@ -643,6 +643,9 @@ CREATE TABLE plotline_nodes (
     CHECK (event_id IS NOT NULL OR chapter_id IS NOT NULL)
 );
 
+CREATE INDEX idx_plotline_nodes_event
+    ON plotline_nodes(event_id)
+    WHERE event_id IS NOT NULL;
 CREATE INDEX idx_plotline_nodes_event_mention
     ON plotline_nodes(event_mention_id)
     WHERE event_mention_id IS NOT NULL;
