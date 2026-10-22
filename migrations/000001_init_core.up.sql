@@ -86,6 +86,7 @@ CREATE TABLE source_versions (
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (source_document_id, version_no),
     UNIQUE (id, work_id),
+    UNIQUE (id, source_document_id, work_id),
     FOREIGN KEY (source_document_id, work_id)
         REFERENCES source_documents(id, work_id) ON DELETE RESTRICT
 );
@@ -197,6 +198,8 @@ CREATE TABLE analysis_runs (
         REFERENCES source_documents(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (source_version_id, work_id)
         REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (source_version_id, source_document_id, work_id)
+        REFERENCES source_versions(id, source_document_id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (split_version_id, source_version_id, work_id)
         REFERENCES split_versions(id, source_version_id, work_id) ON DELETE RESTRICT,
     UNIQUE (id, work_id),
