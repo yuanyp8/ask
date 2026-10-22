@@ -78,7 +78,7 @@ CREATE TABLE source_versions (
     source_document_id uuid NOT NULL,
     work_id uuid NOT NULL,
     version_no integer NOT NULL CHECK (version_no > 0),
-    normalized_text_storage_key text NOT NULL,
+    normalized_text_storage_key text NOT NULL UNIQUE,
     content_sha256 char(64) NOT NULL CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
     parser_name text NOT NULL,
     parser_version text NOT NULL,
