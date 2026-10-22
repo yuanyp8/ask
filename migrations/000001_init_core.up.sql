@@ -99,6 +99,7 @@ CREATE TABLE split_versions (
     created_at timestamptz NOT NULL DEFAULT now(),
     confirmed_at timestamptz,
     UNIQUE (source_version_id, version_no),
+    UNIQUE (id, source_version_id),
     CHECK (status <> 'confirmed' OR confirmed_at IS NOT NULL)
 );
 
@@ -169,6 +170,8 @@ CREATE TABLE analysis_runs (
     finished_at timestamptz,
     FOREIGN KEY (project_id, work_id)
         REFERENCES project_works(project_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (split_version_id, source_version_id)
+        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
 );
@@ -204,6 +207,8 @@ CREATE TABLE artifacts (
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, artifact_key, revision),
+    FOREIGN KEY (split_version_id, source_version_id)
+        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
     CHECK (
         (scope_type = 'work' AND scope_id IS NULL)
         OR (scope_type <> 'work' AND scope_id IS NOT NULL)
@@ -261,7 +266,8 @@ CREATE TABLE story_entities (
     CHECK (
         (status = 'merged' AND merged_into_entity_id IS NOT NULL)
         OR (status <> 'merged' AND merged_into_entity_id IS NULL)
-    )
+    ),
+    UNIQUE (id, work_id)
 );
 
 CREATE INDEX idx_story_entities_work_type_name
@@ -286,8 +292,8 @@ CREATE INDEX idx_entity_aliases_normalized
 CREATE TABLE story_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
-    source_entity_id uuid NOT NULL REFERENCES story_entities(id) ON DELETE RESTRICT,
-    target_entity_id uuid NOT NULL REFERENCES story_entities(id) ON DELETE RESTRICT,
+    source_entity_id uuid NOT NULL,
+    target_entity_id uuid NOT NULL,
     relation_type text NOT NULL,
     description text NOT NULL DEFAULT '',
     confidence numeric(4,3) CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
@@ -295,6 +301,10 @@ CREATE TABLE story_relations (
     status text NOT NULL DEFAULT 'candidate'
         CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
     created_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (source_entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (target_entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     CHECK (source_entity_id <> target_entity_id)
 );
 
@@ -316,7 +326,8 @@ CREATE TABLE story_events (
     status text NOT NULL DEFAULT 'candidate'
         CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
     created_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (work_id, event_key)
+    UNIQUE (work_id, event_key),
+    UNIQUE (id, work_id)
 );
 
 CREATE INDEX idx_story_events_work_order
@@ -327,8 +338,8 @@ CREATE INDEX idx_story_events_chapter
 CREATE TABLE event_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
-    source_event_id uuid NOT NULL REFERENCES story_events(id) ON DELETE RESTRICT,
-    target_event_id uuid NOT NULL REFERENCES story_events(id) ON DELETE RESTRICT,
+    source_event_id uuid NOT NULL,
+    target_event_id uuid NOT NULL,
     relation_type text NOT NULL
         CHECK (relation_type IN ('causes', 'enables', 'precedes', 'foreshadows', 'reveals', 'contradicts', 'parallels', 'other')),
     confidence numeric(4,3) CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
@@ -336,6 +347,10 @@ CREATE TABLE event_relations (
     status text NOT NULL DEFAULT 'candidate'
         CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
     created_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (source_event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (target_event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
     CHECK (source_event_id <> target_event_id),
     UNIQUE (work_id, source_event_id, target_event_id, relation_type)
 );
@@ -464,6 +479,8 @@ CREATE TABLE outline_sets (
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, outline_mode, version_no),
+    FOREIGN KEY (split_version_id, source_version_id)
+        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
     CHECK (
         outline_mode <> 'reverse_analysis'
@@ -477,7 +494,7 @@ CREATE INDEX idx_outline_sets_work_mode_version
 CREATE TABLE outline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     outline_set_id uuid NOT NULL REFERENCES outline_sets(id) ON DELETE CASCADE,
-    parent_id uuid REFERENCES outline_nodes(id) ON DELETE CASCADE,
+    parent_id uuid,
     node_type text NOT NULL
         CHECK (node_type IN ('book', 'volume', 'act', 'story_arc', 'chapter', 'scene', 'beat')),
     title text NOT NULL,
@@ -486,7 +503,10 @@ CREATE TABLE outline_nodes (
     source_chapter_id uuid REFERENCES source_chapters(id) ON DELETE RESTRICT,
     linked_event_id uuid REFERENCES story_events(id) ON DELETE RESTRICT,
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (id, outline_set_id),
+    FOREIGN KEY (parent_id, outline_set_id)
+        REFERENCES outline_nodes(id, outline_set_id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX uq_outline_nodes_child_position
