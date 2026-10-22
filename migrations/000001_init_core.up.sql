@@ -259,9 +259,11 @@ CREATE TABLE story_entities (
     first_seen_chapter_id uuid REFERENCES source_chapters(id) ON DELETE SET NULL,
     status text NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'merged', 'archived')),
-    merged_into_entity_id uuid REFERENCES story_entities(id) ON DELETE RESTRICT,
+    merged_into_entity_id uuid,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (merged_into_entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     CHECK (merged_into_entity_id IS NULL OR merged_into_entity_id <> id),
     CHECK (
         (status = 'merged' AND merged_into_entity_id IS NOT NULL)
@@ -518,4 +520,3 @@ CREATE UNIQUE INDEX uq_outline_nodes_root_position
 CREATE INDEX idx_outline_nodes_parent
     ON outline_nodes(outline_set_id, parent_id, position);
 
-COMMIT;
