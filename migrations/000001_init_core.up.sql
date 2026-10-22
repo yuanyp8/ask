@@ -244,7 +244,7 @@ CREATE TABLE artifacts (
         REFERENCES artifacts(id, work_id) ON DELETE RESTRICT,
     CHECK (
         (scope_type = 'work' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
-        OR (scope_type = 'chapter' AND scope_chapter_id IS NOT NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
+        OR (scope_type = 'chapter' AND scope_chapter_id IS NOT NULL AND split_version_id IS NOT NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
         OR (scope_type = 'entity' AND scope_chapter_id IS NULL AND scope_entity_id IS NOT NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NULL)
         OR (scope_type = 'plotline' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NOT NULL AND scope_outline_set_id IS NULL)
         OR (scope_type = 'outline_set' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NOT NULL)
@@ -696,8 +696,8 @@ CREATE INDEX idx_outline_nodes_parent
 -- Add these FKs after all target tables have been created.
 ALTER TABLE artifacts
     ADD CONSTRAINT fk_artifacts_scope_chapter
-        FOREIGN KEY (scope_chapter_id, work_id)
-        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
+        FOREIGN KEY (scope_chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
     ADD CONSTRAINT fk_artifacts_scope_entity
         FOREIGN KEY (scope_entity_id, work_id)
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
