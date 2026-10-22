@@ -420,9 +420,11 @@ CREATE INDEX idx_event_relations_target
 
 CREATE TABLE analysis_claims (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    artifact_id uuid NOT NULL REFERENCES artifacts(id) ON DELETE RESTRICT,
-    entity_id uuid REFERENCES story_entities(id) ON DELETE RESTRICT,
-    event_id uuid REFERENCES story_events(id) ON DELETE RESTRICT,
+    artifact_id uuid NOT NULL,
+    work_id uuid NOT NULL,
+    split_version_id uuid,
+    entity_id uuid,
+    event_id uuid,
     claim_type text NOT NULL,
     claim_text text NOT NULL,
     epistemic_status text NOT NULL
@@ -434,7 +436,17 @@ CREATE TABLE analysis_claims (
     reviewed_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     reviewed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
-    CHECK (entity_id IS NULL OR event_id IS NULL)
+    UNIQUE (id, split_version_id, work_id),
+    FOREIGN KEY (artifact_id, work_id)
+        REFERENCES artifacts(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (artifact_id, split_version_id, work_id)
+        REFERENCES artifacts(id, split_version_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    CHECK (entity_id IS NULL OR event_id IS NULL),
+    CHECK (review_status = 'unreviewed' OR reviewed_at IS NOT NULL)
 );
 
 CREATE INDEX idx_analysis_claims_artifact
@@ -448,17 +460,29 @@ CREATE INDEX idx_analysis_claims_event
 
 CREATE TABLE evidence_anchors (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    claim_id uuid NOT NULL REFERENCES analysis_claims(id) ON DELETE CASCADE,
-    chapter_id uuid NOT NULL REFERENCES source_chapters(id) ON DELETE RESTRICT,
+    claim_id uuid NOT NULL,
+    work_id uuid NOT NULL,
+    split_version_id uuid NOT NULL,
+    chapter_id uuid NOT NULL,
     anchor_kind text NOT NULL DEFAULT 'quote'
         CHECK (anchor_kind IN ('quote', 'span', 'chapter_context')),
     start_char integer NOT NULL CHECK (start_char >= 0),
     end_char integer NOT NULL CHECK (end_char > start_char),
     quote_text text NOT NULL,
-    quote_sha256 char(64) NOT NULL,
+    quote_sha256 char(64) NOT NULL CHECK (quote_sha256 ~ '^[0-9a-f]{64}$'),
     evidence_role text NOT NULL DEFAULT 'supports'
         CHECK (evidence_role IN ('supports', 'challenges', 'context')),
-    created_at timestamptz NOT NULL DEFAULT now()
+    verification_status text NOT NULL DEFAULT 'unverified'
+        CHECK (verification_status IN ('verified', 'invalid', 'unverified')),
+    verified_at timestamptz,
+    verification_error text,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (id, work_id),
+    FOREIGN KEY (claim_id, split_version_id, work_id)
+        REFERENCES analysis_claims(id, split_version_id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
+    CHECK (verification_status <> 'verified' OR verified_at IS NOT NULL)
 );
 
 CREATE INDEX idx_evidence_anchors_claim
@@ -467,15 +491,25 @@ CREATE INDEX idx_evidence_anchors_chapter_span
     ON evidence_anchors(chapter_id, start_char, end_char);
 
 CREATE TABLE story_relation_evidence (
-    relation_id uuid NOT NULL REFERENCES story_relations(id) ON DELETE CASCADE,
-    evidence_anchor_id uuid NOT NULL REFERENCES evidence_anchors(id) ON DELETE CASCADE,
-    PRIMARY KEY (relation_id, evidence_anchor_id)
+    relation_id uuid NOT NULL,
+    evidence_anchor_id uuid NOT NULL,
+    work_id uuid NOT NULL,
+    PRIMARY KEY (relation_id, evidence_anchor_id),
+    FOREIGN KEY (relation_id, work_id)
+        REFERENCES story_relations(id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (evidence_anchor_id, work_id)
+        REFERENCES evidence_anchors(id, work_id) ON DELETE CASCADE
 );
 
 CREATE TABLE event_relation_evidence (
-    event_relation_id uuid NOT NULL REFERENCES event_relations(id) ON DELETE CASCADE,
-    evidence_anchor_id uuid NOT NULL REFERENCES evidence_anchors(id) ON DELETE CASCADE,
-    PRIMARY KEY (event_relation_id, evidence_anchor_id)
+    event_relation_id uuid NOT NULL,
+    evidence_anchor_id uuid NOT NULL,
+    work_id uuid NOT NULL,
+    PRIMARY KEY (event_relation_id, evidence_anchor_id),
+    FOREIGN KEY (event_relation_id, work_id)
+        REFERENCES event_relations(id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (evidence_anchor_id, work_id)
+        REFERENCES evidence_anchors(id, work_id) ON DELETE CASCADE
 );
 
 CREATE TABLE plotlines (
