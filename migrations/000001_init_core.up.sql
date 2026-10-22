@@ -115,6 +115,9 @@ CREATE TABLE split_versions (
 CREATE INDEX idx_split_versions_source
     ON split_versions(source_version_id, version_no DESC);
 
+CREATE UNIQUE INDEX uq_split_one_confirmed_per_source
+    ON split_versions(source_version_id) WHERE status = 'confirmed';
+
 CREATE TABLE source_chapters (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     split_version_id uuid NOT NULL,
@@ -653,3 +656,24 @@ CREATE INDEX idx_artifacts_scope_plotline
     ON artifacts(scope_plotline_id) WHERE scope_plotline_id IS NOT NULL;
 CREATE INDEX idx_artifacts_scope_outline_set
     ON artifacts(scope_outline_set_id) WHERE scope_outline_set_id IS NOT NULL;
+
+CREATE TABLE audit_events (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id uuid REFERENCES projects(id) ON DELETE RESTRICT,
+    work_id uuid REFERENCES works(id) ON DELETE RESTRICT,
+    actor_id uuid REFERENCES app_users(id) ON DELETE SET NULL,
+    action text NOT NULL,
+    resource_type text NOT NULL,
+    resource_id uuid,
+    change_summary jsonb NOT NULL DEFAULT '{}'::jsonb,
+    request_id text,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CHECK (project_id IS NOT NULL OR work_id IS NOT NULL)
+);
+
+CREATE INDEX idx_audit_events_project_created
+    ON audit_events(project_id, created_at DESC) WHERE project_id IS NOT NULL;
+CREATE INDEX idx_audit_events_work_created
+    ON audit_events(work_id, created_at DESC) WHERE work_id IS NOT NULL;
+CREATE INDEX idx_audit_events_actor_created
+    ON audit_events(actor_id, created_at DESC) WHERE actor_id IS NOT NULL;
