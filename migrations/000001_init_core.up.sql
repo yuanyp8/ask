@@ -206,6 +206,7 @@ CREATE TABLE analysis_runs (
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
     CHECK (task_type <> 'source_parse' OR source_document_id IS NOT NULL),
     CHECK (task_type <> 'chapter_split' OR source_version_id IS NOT NULL),
+    CHECK (status <> 'running' OR started_at IS NOT NULL),
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at),
     CHECK (
         (status IN ('succeeded', 'completed_with_warnings', 'failed', 'cancelled') AND finished_at IS NOT NULL)
@@ -311,7 +312,7 @@ CREATE TABLE analysis_run_steps (
     FOREIGN KEY (output_artifact_id, run_id)
         REFERENCES artifacts(id, run_id) ON DELETE RESTRICT,
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at),
-    CHECK (status <> 'running' OR (lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL)),
+    CHECK (status <> 'running' OR (started_at IS NOT NULL AND lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL)),
     CHECK (
         (status IN ('succeeded', 'retryable_failed', 'terminal_failed', 'skipped') AND finished_at IS NOT NULL)
         OR (status IN ('pending', 'running') AND finished_at IS NULL)
