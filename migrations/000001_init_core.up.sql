@@ -312,6 +312,9 @@ CREATE TABLE analysis_run_steps (
 CREATE INDEX idx_analysis_run_steps_status
     ON analysis_run_steps(run_id, status, sequence_no);
 
+CREATE INDEX idx_analysis_run_steps_expired_lease
+    ON analysis_run_steps(lease_expires_at) WHERE status = 'running';
+
 CREATE TABLE story_entities (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
@@ -797,6 +800,9 @@ CREATE TABLE integration_outbox (
 CREATE INDEX idx_integration_outbox_pending
     ON integration_outbox(status, available_at, created_at)
     WHERE status IN ('pending', 'retryable_failed', 'publishing');
+
+CREATE INDEX idx_integration_outbox_expired_lease
+    ON integration_outbox(lease_expires_at) WHERE status = 'publishing';
 CREATE INDEX idx_integration_outbox_project
     ON integration_outbox(project_id, created_at DESC) WHERE project_id IS NOT NULL;
 CREATE INDEX idx_integration_outbox_work
