@@ -22,6 +22,10 @@
 | CAP-06 / FR-WRITE-* | 小说创作 | Planned: canon_items, manuscript_versions, manuscript_chapters | 后续 API 详设 | P-09 | Planned |
 | CAP-08 | 检索与知识库 | source chapters, entities, events, evidence | Internal retrieval contract | 阅读/拆书/创作工作台 | TEST-RETRIEVAL-* |
 | CAP-09 / NFR-SEC-* | 安全与运维 | project_members, integration_outbox, IAM/SpiceDB, auditx, run/step metadata | 全部 API | 全局权限/任务状态 | TEST-SEC-*, TEST-OPS-* |
+| FR-ANL-009 / FR-ANL-012 | 叙事时序与信息流 | event_mentions, event_relations, claims, evidence_anchors | 09 API：事件/证据 | 事件时间线、叙述顺序视图 | TEST-NARR-* |
+| FR-ANL-010 | 事件因果图 | story_events, event_mentions, event_relations | 09 API：事件关系 | 因果图与证据侧栏 | TEST-CAUSAL-* |
+| FR-ANL-011 | 主线/支线与线索账本 | plotlines, plotline_nodes, event_relations, artifacts | 09 API：故事线 | 故事线板、伏笔账本 | TEST-THREAD-* |
+| FR-WRITE-001/002 | 原创小说设计 | works, story_entities, story_events, plotlines, outline_sets, outline_nodes | 09 API：创作设计（需补齐 DTO） | 创作简报、人物关系、事件图、大纲工作台 | TEST-DESIGN-* |
 
 ## 2. 测试 ID 约定
 
@@ -33,6 +37,10 @@
 - TEST-ENTITY：mention resolution、merge/split、跨 work 防护。
 - TEST-EVENT：事件聚合、叙事顺序和故事时间。
 - TEST-PLOT：主线支线、节点顺序和伏笔状态。
+- TEST-NARR：叙事顺序、故事时间、视角和信息揭示。
+- TEST-CAUSAL：因果边、前置条件、促成/阻止关系和反例。
+- TEST-THREAD：伏笔建立、强化、误导、回收与未解状态。
+- TEST-DESIGN：创作简报、计划事件、人物动机、结构树和一致性诊断。
 - TEST-OUTLINE：树结构、版本、移动与排序冲突。
 - TEST-REVIEW：审核状态、审计和版本比较。
 - TEST-SEC：鉴权、越权访问、上传安全。
