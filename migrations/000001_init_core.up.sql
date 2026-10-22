@@ -102,6 +102,7 @@ CREATE TABLE split_versions (
     status text NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'confirmed', 'superseded')),
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
+    confirmed_by uuid REFERENCES app_users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now(),
     confirmed_at timestamptz,
     UNIQUE (source_version_id, version_no),
@@ -109,7 +110,7 @@ CREATE TABLE split_versions (
     UNIQUE (id, work_id),
     FOREIGN KEY (source_version_id, work_id)
         REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
-    CHECK (status <> 'confirmed' OR confirmed_at IS NOT NULL)
+    CHECK (status <> 'confirmed' OR (confirmed_at IS NOT NULL AND confirmed_by IS NOT NULL))
 );
 
 CREATE INDEX idx_split_versions_source
@@ -157,10 +158,13 @@ CREATE TABLE analysis_runs (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id uuid NOT NULL,
     work_id uuid NOT NULL,
+    source_document_id uuid,
     source_version_id uuid,
     split_version_id uuid,
     task_type text NOT NULL
         CHECK (task_type IN (
+            'source_parse',
+            'chapter_split',
             'chapter_analysis',
             'book_reverse_analysis',
             'entity_resolution',
@@ -189,12 +193,16 @@ CREATE TABLE analysis_runs (
     finished_at timestamptz,
     FOREIGN KEY (project_id, work_id)
         REFERENCES project_works(project_id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (source_document_id, work_id)
+        REFERENCES source_documents(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (source_version_id, work_id)
         REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (split_version_id, source_version_id, work_id)
         REFERENCES split_versions(id, source_version_id, work_id) ON DELETE RESTRICT,
     UNIQUE (id, work_id),
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
+    CHECK (task_type <> 'source_parse' OR source_document_id IS NOT NULL),
+    CHECK (task_type <> 'chapter_split' OR source_version_id IS NOT NULL),
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
 );
 
@@ -230,6 +238,8 @@ CREATE TABLE artifacts (
     run_id uuid,
     supersedes_artifact_id uuid,
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
+    reviewed_by uuid REFERENCES app_users(id) ON DELETE RESTRICT,
+    reviewed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, artifact_key, revision),
     UNIQUE (id, work_id),
@@ -250,7 +260,8 @@ CREATE TABLE artifacts (
         OR (scope_type = 'plotline' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NOT NULL AND scope_outline_set_id IS NULL)
         OR (scope_type = 'outline_set' AND scope_chapter_id IS NULL AND scope_entity_id IS NULL AND scope_plotline_id IS NULL AND scope_outline_set_id IS NOT NULL)
     ),
-    CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL)
+    CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
+    CHECK (status NOT IN ('accepted', 'rejected') OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL))
 );
 
 CREATE INDEX idx_artifacts_work_key_revision
@@ -508,7 +519,7 @@ CREATE TABLE analysis_claims (
     review_status text NOT NULL DEFAULT 'unreviewed'
         CHECK (review_status IN ('unreviewed', 'accepted', 'rejected', 'edited')),
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
-    reviewed_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
+    reviewed_by uuid REFERENCES app_users(id) ON DELETE RESTRICT,
     reviewed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, split_version_id, work_id),
@@ -522,7 +533,7 @@ CREATE TABLE analysis_claims (
     FOREIGN KEY (event_id, work_id)
         REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
     CHECK (entity_id IS NULL OR event_id IS NULL),
-    CHECK (review_status = 'unreviewed' OR reviewed_at IS NOT NULL)
+    CHECK (review_status = 'unreviewed' OR (reviewed_at IS NOT NULL AND reviewed_by IS NOT NULL))
 );
 
 CREATE INDEX idx_analysis_claims_artifact
@@ -668,6 +679,8 @@ CREATE TABLE outline_sets (
     status text NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'in_review', 'accepted', 'superseded', 'stale')),
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
+    reviewed_by uuid REFERENCES app_users(id) ON DELETE RESTRICT,
+    reviewed_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, outline_mode, version_no),
     UNIQUE (id, work_id),
@@ -680,7 +693,8 @@ CREATE TABLE outline_sets (
     CHECK (
         outline_mode <> 'reverse_analysis'
         OR (source_version_id IS NOT NULL AND split_version_id IS NOT NULL)
-    )
+    ),
+    CHECK (status <> 'accepted' OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL))
 );
 
 CREATE INDEX idx_outline_sets_work_mode_version
