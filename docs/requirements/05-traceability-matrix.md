@@ -17,11 +17,11 @@
 | FR-ANL-004 | 事件提取 | story_events, event_mentions, event_relations | 09 API：事件 | P-05、P-06 | TEST-EVENT-* |
 | FR-ANL-005 / FR-ANL-007 | 主线支线/伏笔 | plotlines, plotline_nodes, event_relations | 09 API：故事线 | P-06 | TEST-PLOT-* |
 | FR-ANL-006 | 大纲树 | outline_sets, outline_nodes | 09 API：大纲 | P-07 | TEST-OUTLINE-* |
-| CAP-04 / FR-REV-* | 证据审核 | artifacts, claims, anchors, audit_events | 09 API：审核 | P-04、P-05 | TEST-REVIEW-* |
+| CAP-04 / FR-REV-* | 证据审核 | artifacts, claims, anchors, integration_outbox, auditx | 09 API：审核 | P-04、P-05 | TEST-REVIEW-* |
 | CAP-05 / FR-READ-* | 阅读导师 | Planned: reading_progress, reading_notes, quiz_attempts | 后续 API 详设 | P-08 | Planned |
 | CAP-06 / FR-WRITE-* | 小说创作 | Planned: canon_items, manuscript_versions, manuscript_chapters | 后续 API 详设 | P-09 | Planned |
 | CAP-08 | 检索与知识库 | source chapters, entities, events, evidence | Internal retrieval contract | 阅读/拆书/创作工作台 | TEST-RETRIEVAL-* |
-| CAP-09 / NFR-SEC-* | 安全与运维 | project_members, audit_events, run/step metadata | 全部 API | 全局权限/任务状态 | TEST-SEC-*, TEST-OPS-* |
+| CAP-09 / NFR-SEC-* | 安全与运维 | project_members, integration_outbox, IAM/SpiceDB, auditx, run/step metadata | 全部 API | 全局权限/任务状态 | TEST-SEC-*, TEST-OPS-* |
 
 ## 2. 测试 ID 约定
 
