@@ -19,7 +19,6 @@ CREATE TABLE projects (
         CHECK (project_type IN ('research', 'writing', 'mixed')),
     status text NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'archived')),
-    owner_id uuid NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -31,6 +30,9 @@ CREATE TABLE project_members (
     joined_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (project_id, user_id)
 );
+
+CREATE UNIQUE INDEX uq_project_single_owner
+    ON project_members(project_id) WHERE role = 'owner';
 
 CREATE TABLE works (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,30 +60,34 @@ CREATE TABLE source_documents (
     original_filename text NOT NULL,
     media_type text NOT NULL,
     storage_key text NOT NULL UNIQUE,
-    sha256 char(64) NOT NULL,
+    sha256 char(64) NOT NULL CHECK (sha256 ~ '^[0-9a-f]{64}$'),
     byte_size bigint NOT NULL CHECK (byte_size >= 0),
     status text NOT NULL DEFAULT 'uploaded'
         CHECK (status IN ('uploaded', 'parsing', 'ready', 'failed', 'archived')),
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (id, work_id),
+    UNIQUE (work_id, sha256)
 );
 
 CREATE INDEX idx_source_documents_work_created
     ON source_documents(work_id, created_at DESC);
-CREATE INDEX idx_source_documents_checksum
-    ON source_documents(work_id, sha256);
 
 CREATE TABLE source_versions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_document_id uuid NOT NULL REFERENCES source_documents(id) ON DELETE RESTRICT,
+    source_document_id uuid NOT NULL,
+    work_id uuid NOT NULL,
     version_no integer NOT NULL CHECK (version_no > 0),
-    normalized_text_key text,
-    content_sha256 char(64) NOT NULL,
+    normalized_text_storage_key text NOT NULL,
+    content_sha256 char(64) NOT NULL CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
     parser_name text NOT NULL,
     parser_version text NOT NULL,
     normalization_profile jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (source_document_id, version_no)
+    UNIQUE (source_document_id, version_no),
+    UNIQUE (id, work_id),
+    FOREIGN KEY (source_document_id, work_id)
+        REFERENCES source_documents(id, work_id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_source_versions_document
@@ -89,7 +95,8 @@ CREATE INDEX idx_source_versions_document
 
 CREATE TABLE split_versions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_version_id uuid NOT NULL REFERENCES source_versions(id) ON DELETE RESTRICT,
+    source_version_id uuid NOT NULL,
+    work_id uuid NOT NULL,
     version_no integer NOT NULL CHECK (version_no > 0),
     split_config jsonb NOT NULL DEFAULT '{}'::jsonb,
     status text NOT NULL DEFAULT 'draft'
@@ -98,7 +105,10 @@ CREATE TABLE split_versions (
     created_at timestamptz NOT NULL DEFAULT now(),
     confirmed_at timestamptz,
     UNIQUE (source_version_id, version_no),
-    UNIQUE (id, source_version_id),
+    UNIQUE (id, source_version_id, work_id),
+    UNIQUE (id, work_id),
+    FOREIGN KEY (source_version_id, work_id)
+        REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
     CHECK (status <> 'confirmed' OR confirmed_at IS NOT NULL)
 );
 
@@ -107,23 +117,25 @@ CREATE INDEX idx_split_versions_source
 
 CREATE TABLE source_chapters (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    split_version_id uuid NOT NULL REFERENCES split_versions(id) ON DELETE RESTRICT,
+    split_version_id uuid NOT NULL,
+    work_id uuid NOT NULL,
     chapter_no integer NOT NULL CHECK (chapter_no > 0),
     title text NOT NULL,
     chapter_type text NOT NULL DEFAULT 'normal'
         CHECK (chapter_type IN ('normal', 'prologue', 'epilogue', 'interlude', 'appendix', 'unknown')),
     content_text text NOT NULL,
-    start_offset bigint,
-    end_offset bigint,
-    content_sha256 char(64) NOT NULL,
-    char_count integer NOT NULL CHECK (char_count >= 0),
+    source_start_char bigint NOT NULL CHECK (source_start_char >= 0),
+    source_end_char bigint NOT NULL CHECK (source_end_char > source_start_char),
+    content_sha256 char(64) NOT NULL CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
+    content_char_count integer NOT NULL CHECK (content_char_count >= 0),
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (split_version_id, chapter_no),
-    CHECK (char_count = char_length(content_text)),
-    CHECK (
-        (start_offset IS NULL AND end_offset IS NULL)
-        OR (start_offset >= 0 AND end_offset >= start_offset)
-    )
+    UNIQUE (id, work_id),
+    UNIQUE (id, split_version_id, work_id),
+    FOREIGN KEY (split_version_id, work_id)
+        REFERENCES split_versions(id, work_id) ON DELETE RESTRICT,
+    CHECK (content_char_count = char_length(content_text)),
+    CHECK (source_end_char - source_start_char = content_char_count)
 );
 
 CREATE INDEX idx_source_chapters_split_order
@@ -131,10 +143,10 @@ CREATE INDEX idx_source_chapters_split_order
 CREATE INDEX idx_source_chapters_content_hash
     ON source_chapters(content_sha256);
 
-COMMENT ON COLUMN source_chapters.start_offset IS
-    'Optional zero-based offset in the canonical normalized full source text.';
-COMMENT ON COLUMN source_chapters.end_offset IS
-    'Optional exclusive offset in the canonical normalized full source text.';
+COMMENT ON COLUMN source_chapters.source_start_char IS
+    'Zero-based inclusive offset in the canonical normalized full source text.';
+COMMENT ON COLUMN source_chapters.source_end_char IS
+    'Zero-based exclusive offset in the canonical normalized full source text.';
 COMMENT ON COLUMN source_chapters.content_text IS
     'Canonical normalized chapter text. Evidence offsets are measured in Unicode code points over this exact text.';
 
@@ -142,8 +154,8 @@ CREATE TABLE analysis_runs (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id uuid NOT NULL,
     work_id uuid NOT NULL,
-    source_version_id uuid REFERENCES source_versions(id) ON DELETE RESTRICT,
-    split_version_id uuid REFERENCES split_versions(id) ON DELETE RESTRICT,
+    source_version_id uuid,
+    split_version_id uuid,
     task_type text NOT NULL
         CHECK (task_type IN (
             'chapter_analysis',
@@ -159,18 +171,25 @@ CREATE TABLE analysis_runs (
     idempotency_key text,
     input_manifest jsonb NOT NULL DEFAULT '{}'::jsonb,
     progress jsonb NOT NULL DEFAULT '{}'::jsonb,
-    model_id text,
-    prompt_version text,
+    requested_options jsonb NOT NULL DEFAULT '{}'::jsonb,
+    pipeline_version text NOT NULL DEFAULT 'v1',
+    execution_profile text,
     error_code text,
     error_message text,
+    error_details jsonb NOT NULL DEFAULT '{}'::jsonb,
+    cancel_requested_at timestamptz,
+    heartbeat_at timestamptz,
     requested_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     started_at timestamptz,
     finished_at timestamptz,
     FOREIGN KEY (project_id, work_id)
         REFERENCES project_works(project_id, work_id) ON DELETE RESTRICT,
-    FOREIGN KEY (split_version_id, source_version_id)
-        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
+    FOREIGN KEY (source_version_id, work_id)
+        REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (split_version_id, source_version_id, work_id)
+        REFERENCES split_versions(id, source_version_id, work_id) ON DELETE RESTRICT,
+    UNIQUE (id, work_id),
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
     CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
 );
