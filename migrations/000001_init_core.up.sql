@@ -303,12 +303,14 @@ CREATE TABLE story_entities (
     normalized_name text NOT NULL,
     description text NOT NULL DEFAULT '',
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
-    first_seen_chapter_id uuid REFERENCES source_chapters(id) ON DELETE SET NULL,
+    first_seen_chapter_id uuid,
     status text NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'merged', 'archived')),
     merged_into_entity_id uuid,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (first_seen_chapter_id, work_id)
+        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (merged_into_entity_id, work_id)
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     CHECK (merged_into_entity_id IS NULL OR merged_into_entity_id <> id),
@@ -326,17 +328,20 @@ CREATE INDEX idx_story_entities_work_status
 
 CREATE TABLE entity_aliases (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    entity_id uuid NOT NULL REFERENCES story_entities(id) ON DELETE CASCADE,
+    entity_id uuid NOT NULL,
+    work_id uuid NOT NULL,
     alias text NOT NULL,
     normalized_alias text NOT NULL,
     alias_type text NOT NULL DEFAULT 'alternate_name'
         CHECK (alias_type IN ('alternate_name', 'title', 'nickname', 'transliteration', 'unknown')),
     created_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (entity_id, normalized_alias)
+    UNIQUE (entity_id, normalized_alias),
+    FOREIGN KEY (entity_id, work_id)
+        REFERENCES story_entities(id, work_id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_entity_aliases_normalized
-    ON entity_aliases(normalized_alias);
+    ON entity_aliases(work_id, normalized_alias);
 
 CREATE TABLE story_relations (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -354,7 +359,8 @@ CREATE TABLE story_relations (
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (target_entity_id, work_id)
         REFERENCES story_entities(id, work_id) ON DELETE RESTRICT,
-    CHECK (source_entity_id <> target_entity_id)
+    CHECK (source_entity_id <> target_entity_id),
+    UNIQUE (id, work_id)
 );
 
 CREATE INDEX idx_story_relations_source
@@ -366,7 +372,7 @@ CREATE TABLE story_events (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL REFERENCES works(id) ON DELETE RESTRICT,
     event_key text NOT NULL,
-    chapter_id uuid REFERENCES source_chapters(id) ON DELETE SET NULL,
+    chapter_id uuid,
     event_type text NOT NULL DEFAULT 'other',
     summary text NOT NULL,
     narrative_order bigint NOT NULL,
@@ -376,7 +382,9 @@ CREATE TABLE story_events (
         CHECK (status IN ('candidate', 'accepted', 'rejected', 'archived')),
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, event_key),
-    UNIQUE (id, work_id)
+    UNIQUE (id, work_id),
+    FOREIGN KEY (chapter_id, work_id)
+        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_story_events_work_order
@@ -401,7 +409,8 @@ CREATE TABLE event_relations (
     FOREIGN KEY (target_event_id, work_id)
         REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
     CHECK (source_event_id <> target_event_id),
-    UNIQUE (work_id, source_event_id, target_event_id, relation_type)
+    UNIQUE (work_id, source_event_id, target_event_id, relation_type),
+    UNIQUE (id, work_id)
 );
 
 CREATE INDEX idx_event_relations_source
@@ -485,7 +494,8 @@ CREATE TABLE plotlines (
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (work_id, line_key)
+    UNIQUE (work_id, line_key),
+    UNIQUE (id, work_id)
 );
 
 CREATE INDEX idx_plotlines_work_type_status
@@ -493,17 +503,24 @@ CREATE INDEX idx_plotlines_work_type_status
 
 CREATE TABLE plotline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    plotline_id uuid NOT NULL REFERENCES plotlines(id) ON DELETE CASCADE,
+    work_id uuid NOT NULL,
+    plotline_id uuid NOT NULL,
     position integer NOT NULL CHECK (position > 0),
     node_type text NOT NULL
         CHECK (node_type IN ('setup', 'development', 'turning_point', 'convergence', 'payoff', 'closure', 'other')),
-    event_id uuid REFERENCES story_events(id) ON DELETE RESTRICT,
-    chapter_id uuid REFERENCES source_chapters(id) ON DELETE RESTRICT,
+    event_id uuid,
+    chapter_id uuid,
     summary text NOT NULL DEFAULT '',
     narrative_function text NOT NULL DEFAULT '',
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (plotline_id, position),
+    FOREIGN KEY (plotline_id, work_id)
+        REFERENCES plotlines(id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (chapter_id, work_id)
+        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
     CHECK (event_id IS NOT NULL OR chapter_id IS NOT NULL)
 );
 
@@ -528,8 +545,11 @@ CREATE TABLE outline_sets (
     created_by uuid REFERENCES app_users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, outline_mode, version_no),
-    FOREIGN KEY (split_version_id, source_version_id)
-        REFERENCES split_versions(id, source_version_id) ON DELETE RESTRICT,
+    UNIQUE (id, work_id),
+    FOREIGN KEY (source_version_id, work_id)
+        REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (split_version_id, source_version_id, work_id)
+        REFERENCES split_versions(id, source_version_id, work_id) ON DELETE RESTRICT,
     CHECK (split_version_id IS NULL OR source_version_id IS NOT NULL),
     CHECK (
         outline_mode <> 'reverse_analysis'
@@ -542,20 +562,28 @@ CREATE INDEX idx_outline_sets_work_mode_version
 
 CREATE TABLE outline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    outline_set_id uuid NOT NULL REFERENCES outline_sets(id) ON DELETE CASCADE,
+    work_id uuid NOT NULL,
+    outline_set_id uuid NOT NULL,
     parent_id uuid,
     node_type text NOT NULL
         CHECK (node_type IN ('book', 'volume', 'act', 'story_arc', 'chapter', 'scene', 'beat')),
     title text NOT NULL,
     summary text NOT NULL DEFAULT '',
     position integer NOT NULL CHECK (position > 0),
-    source_chapter_id uuid REFERENCES source_chapters(id) ON DELETE RESTRICT,
-    linked_event_id uuid REFERENCES story_events(id) ON DELETE RESTRICT,
+    source_chapter_id uuid,
+    linked_event_id uuid,
     attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, outline_set_id),
-    FOREIGN KEY (parent_id, outline_set_id)
-        REFERENCES outline_nodes(id, outline_set_id) ON DELETE CASCADE
+    UNIQUE (id, outline_set_id, work_id),
+    FOREIGN KEY (outline_set_id, work_id)
+        REFERENCES outline_sets(id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id, outline_set_id, work_id)
+        REFERENCES outline_nodes(id, outline_set_id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (source_chapter_id, work_id)
+        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (linked_event_id, work_id)
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX uq_outline_nodes_child_position
