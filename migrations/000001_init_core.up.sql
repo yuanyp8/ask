@@ -665,6 +665,7 @@ CREATE TABLE outline_sets (
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (work_id, outline_mode, version_no),
     UNIQUE (id, work_id),
+    UNIQUE (id, split_version_id, work_id),
     FOREIGN KEY (source_version_id, work_id)
         REFERENCES source_versions(id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (split_version_id, source_version_id, work_id)
@@ -683,6 +684,7 @@ CREATE TABLE outline_nodes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     work_id uuid NOT NULL,
     outline_set_id uuid NOT NULL,
+    split_version_id uuid,
     node_key text NOT NULL,
     parent_id uuid,
     node_type text NOT NULL
@@ -696,15 +698,19 @@ CREATE TABLE outline_nodes (
     created_at timestamptz NOT NULL DEFAULT now(),
     UNIQUE (id, outline_set_id),
     UNIQUE (id, outline_set_id, work_id),
+    UNIQUE (id, outline_set_id, split_version_id, work_id),
     UNIQUE (outline_set_id, node_key),
     FOREIGN KEY (outline_set_id, work_id)
         REFERENCES outline_sets(id, work_id) ON DELETE CASCADE,
+    FOREIGN KEY (outline_set_id, split_version_id, work_id)
+        REFERENCES outline_sets(id, split_version_id, work_id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id, outline_set_id, work_id)
         REFERENCES outline_nodes(id, outline_set_id, work_id) ON DELETE CASCADE,
-    FOREIGN KEY (source_chapter_id, work_id)
-        REFERENCES source_chapters(id, work_id) ON DELETE RESTRICT,
+    FOREIGN KEY (source_chapter_id, split_version_id, work_id)
+        REFERENCES source_chapters(id, split_version_id, work_id) ON DELETE RESTRICT,
     FOREIGN KEY (linked_event_id, work_id)
-        REFERENCES story_events(id, work_id) ON DELETE RESTRICT
+        REFERENCES story_events(id, work_id) ON DELETE RESTRICT,
+    CHECK (source_chapter_id IS NULL OR split_version_id IS NOT NULL)
 );
 
 CREATE UNIQUE INDEX uq_outline_nodes_child_position
