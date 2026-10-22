@@ -54,7 +54,7 @@
 
 - POST /works/{work_id}/sources：创建上传会话或上传记录。
 - POST /sources/{source_id}/complete-upload：确认对象已上传并校验哈希。
-- POST /sources/{source_id}/parse：启动解析任务。
+- POST /sources/{source_id}/parse：创建 source_parse 类型的异步 run。
 - GET /sources/{source_id}
 - GET /sources/{source_id}/versions
 - GET /source-versions/{source_version_id}
@@ -76,7 +76,7 @@
 - POST /analysis-runs/{run_id}/retry
 - GET /analysis-runs/{run_id}/artifacts
 
-创建请求至少包含 task_type、source_version_id、split_version_id、scope、outputs 和 options。服务端计算 input_hash；不能完全信任客户端提供的 hash。
+创建请求至少包含 task_type、scope、outputs 和 options。source_parse 任务要求 source_document_id；chapter_split 及源文本分析要求 source_version_id，源文本分析还要求 confirmed split_version_id。服务端计算 input_hash；不能完全信任客户端提供的 hash。
 
 重复 Idempotency-Key 且请求内容相同，应返回原 run；相同 key 但输入内容不同，应返回冲突错误。
 
