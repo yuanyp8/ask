@@ -1,7 +1,7 @@
 -- ASK core schema rollback, migration 000001.
 -- Execute only after confirming the target database and backup policy.
 
-DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS integration_outbox;
 
 DROP TABLE IF EXISTS story_relation_evidence;
 DROP TABLE IF EXISTS event_relation_evidence;
