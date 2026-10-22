@@ -48,7 +48,7 @@ Normalize names, compare aliases and nearby context, and match mentions to exist
 
 ### Stage 3 — Event consolidation
 
-Deduplicate overlapping event candidates across retries and aggregation. Use stable extraction keys derived from run scope, chapter, and local event identity. Keep narrative order separate from in-world time labels.
+Deduplicate overlapping event candidates across retries and aggregation. Use stable extraction keys derived from run scope, chapter, and local event identity. Persist canonical story_events separately from event_mentions. Mention rows retain split version, chapter, local order, narrative order, story-time label and optional text span. Keep narrative order separate from in-world time labels.
 
 ### Stage 4 — Cross-chapter synthesis
 
@@ -108,7 +108,7 @@ The analysis domain calls a provider-neutral interface. It should support:
 - timeout and cancellation;
 - retry classification;
 - token and latency accounting;
-- model ID and prompt/template version capture;
+- provider, model ID, prompt/template version and schema version capture per step;
 - configurable concurrency and rate limits;
 - redacted logs that do not leak full manuscript text by default.
 
@@ -130,3 +130,7 @@ The review action and actor must be recorded. A user-edited claim should retain 
 ## 7. Observability
 
 Track run duration, step duration, retry count, model latency, input/output token usage when available, validation failure count, evidence verification rate, and cancellation reason. Logs should include run ID, step key, work ID, and source/split version IDs.
+
+## 8. Mention resolution
+
+Entity mention extraction and event mention extraction are first-class intermediate results. They preserve the exact occurrence before canonicalization. A resolver may attach an entity mention to a canonical entity, or an event mention to a canonical event, but it must not discard the original surface form, source span, source version or confidence. Ambiguous mentions remain unresolved candidates.
