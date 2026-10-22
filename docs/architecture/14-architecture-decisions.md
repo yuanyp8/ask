@@ -70,6 +70,16 @@
 
 决策：接受、拒绝、编辑和实体合并/拆分均保留审计记录；用户修改后的结果形成新 revision 或独立审核状态。
 
+## ADR-011：Canonical entity/event 与 source mention 分离
+
+状态：Proposed
+
+背景：一个人物或事件可能在多个章节、切分版本和不同版本文本中出现；把 chapter_id 或 narrative_order 放在 canonical entity/event 上会错误地绑定到单一版本。
+
+决策：story_entities/story_events 保存 work 级概念；entity_mentions/event_mentions 保存来源版本、切分版本、章节、原文形式、局部位置和叙事顺序。故事线节点引用具体 event mention，跨版本汇总通过 canonical event 完成。
+
+后果：增加两张关系表和消歧步骤，但能保留原文证据、支持不同版本并减少跨版本数据污染。
+
 ## 待评审问题
 
 - 任务队列首期使用 PostgreSQL job table 还是接入现有 MQ。
