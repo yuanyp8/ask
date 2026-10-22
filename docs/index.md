@@ -8,6 +8,8 @@
 - [平台能力地图](requirements/01-platform-capabilities.md)
 - [核心用户旅程与异常流程](requirements/02-user-journeys.md)
 - [平台功能拆解与验收矩阵](requirements/03-functional-decomposition.md)
+- [平台模块详细设计](requirements/04-module-design.md)
+- [需求—设计—实现追踪矩阵](requirements/05-traceability-matrix.md)
 
 ## 架构与详细设计
 
@@ -29,6 +31,8 @@
 - [15 核心数据字典](architecture/15-data-dictionary.md)
 - [16 领域状态机与生命周期](architecture/16-domain-workflows.md)
 - [17 部署架构](architecture/17-deployment-architecture.md)
+- [18 数据库查询模式与索引设计](architecture/18-query-patterns-and-indexes.md)
+- [19 阅读导师与原创创作域详细设计](architecture/19-reading-writing-domain.md)
 
 ## 数据库迁移
 
