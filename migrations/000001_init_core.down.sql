@@ -1,7 +1,6 @@
 -- ASK core schema rollback, migration 000001
 -- Drops only objects introduced by 000001. Back up data before rollback.
 
-BEGIN;
 
 DROP TABLE IF EXISTS outline_nodes;
 DROP TABLE IF EXISTS outline_sets;
