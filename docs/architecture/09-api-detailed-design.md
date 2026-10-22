@@ -98,11 +98,13 @@
 
 - GET /works/{work_id}/entities?type=&query=&status=
 - GET /entities/{entity_id}
+- GET /entities/{entity_id}/mentions?split_version_id=&chapter_id=
 - PATCH /entities/{entity_id}
 - POST /entities/{entity_id}/merge
 - POST /entities/{entity_id}/split
 - GET /works/{work_id}/events?chapter_id=&cursor=
 - GET /events/{event_id}
+- GET /events/{event_id}/mentions?split_version_id=&chapter_id=
 - PATCH /events/{event_id}
 - GET /works/{work_id}/relations
 - GET /works/{work_id}/plotlines
