@@ -48,7 +48,7 @@ provenance 不信任模型自行填写，服务端必须覆盖。
 
 ## 3. entity_candidate.v1
 
-- mention_key：本次 run 内稳定键。
+- mention_key：本次 run 内稳定键，写入 entity_mentions.mention_key。
 - entity_type：character/location/organization/object/concept/other。
 - surface_form：原文中的称呼。
 - normalized_name：用于匹配的规范化名称。
@@ -63,7 +63,7 @@ provenance 不信任模型自行填写，服务端必须覆盖。
 
 ## 4. story_event.v1
 
-- event_key：run 范围内幂等键。
+- event_key：run 范围内的候选键；持久化时 canonical event_key 由服务端生成或复用，mention_key 保留 run 范围幂等性。
 - summary：事件摘要。
 - actors：事件参与者。
 - action：发生的行动。
@@ -97,7 +97,7 @@ provenance 不信任模型自行填写，服务端必须覆盖。
 节点类型：book、volume、act、story_arc、chapter、scene、beat。层级不固定，不能把三幕结构写死在 schema 中。
 
 每个节点：
-- node_key：当前 artifact 内稳定键。
+- node_key：当前 artifact 内稳定键；持久化后由服务端映射到 outline_nodes.node_key。
 - parent_node_key：父节点，可为空。
 - position：兄弟节点排序。
 - node_type、title、summary。
