@@ -17,6 +17,13 @@
 
 ## 2. 工作空间
 
+### app_users
+- id：ASK 内部用户映射 ID。
+- iam_subject_id：可信 Kernel IAM Principal 的稳定 subject ID，唯一且必填。
+- display_name、email：展示投影；不作为认证凭据。
+- created_at。
+- Casdoor OIDC 是身份认证入口；IAM 是身份/组织映射来源。ASK 不保存密码。
+
 ### projects
 - id：项目标识。
 - name：必填展示名称。
@@ -62,7 +69,7 @@
 ### source_versions
 - id、source_document_id、work_id。
 - version_no：同一 source document 内递增。
-- normalized_text_storage_key：规范化全文的不可变对象键。
+- normalized_text_storage_key：规范化全文的不可变对象键，唯一，不能被其他版本复用。
 - content_sha256：规范化全文 hash。
 - parser_name / parser_version：解析器实现和版本。
 - normalization_profile：换行、Unicode、空白、编码等规范化配置。
@@ -233,11 +240,16 @@
 - confidence、status、run_id、created_at。
 - 同一 canonical event 可在不同 split version 中有多个 mention；排序值不得放在 canonical story_events 上。
 
-### audit_events
-- id、project_id、work_id、actor_id。
-- action、resource_type、resource_id。
-- change_summary：脱敏的变更摘要，不保存完整正文。
-- request_id、created_at。
+### integration_outbox
+- id、dedupe_key：唯一幂等键。
+- aggregate_type / aggregate_id：产生事件的业务聚合。
+- event_type：例如 authz.relationship.sync、audit.record、retrieval.index。
+- project_id / work_id：可选的资源范围。
+- schema_version、payload：版本化、脱敏的事件内容。
+- status：pending / publishing / published / retryable_failed / dead_letter。
+- attempt_count、available_at、lease_owner、lease_expires_at。
+- last_error_code、last_error_message、created_at、published_at。
+- outbox 不是审计事实源；它负责可靠投递。审计事实由 auditx 保存，授权关系由 SpiceDB 保存。
 
 ## 7. 后续域
 
