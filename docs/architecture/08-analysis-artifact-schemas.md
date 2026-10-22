@@ -59,7 +59,7 @@ provenance 不信任模型自行填写，服务端必须覆盖。
 - match_candidates：候选 entity ID 和匹配原因，不由模型最终决定合并。
 - epistemic_status：explicit/inferred/speculative。
 
-同名不等于同一实体；化名、假身份、转世、同名人物和视角误认都必须保留歧义。
+同名不等于同一实体；化名、假身份、转世、同名人物和视角误认都必须保留歧义。模型首先产出 entity mention 候选，服务端再将其关联到 canonical entity；mention 的原文形式和位置不得因归并而丢失。
 
 ## 4. story_event.v1
 
@@ -69,9 +69,10 @@ provenance 不信任模型自行填写，服务端必须覆盖。
 - action：发生的行动。
 - preconditions：前置条件或原因候选。
 - consequences：结果候选。
-- chapter_id：由服务端绑定。
-- local_order：章节内叙事顺序。
-- story_time_label：原文所述故事时间。
+- chapter_id：由服务端绑定到 event mention，而不是 canonical event。
+- local_order：章节内叙事顺序，写入 event_mentions。
+- narrative_order：由服务端根据当前 split version 的章节顺序和章节内顺序计算或校验。
+- story_time_label：原文所述故事时间，属于 event mention。
 - story_time_sort_key：仅在有可靠依据时填写的可排序值。
 - event_type：introduction/conflict/revelation/decision/action/reversal/payoff/closure/other。
 - evidence_refs：候选证据。
@@ -136,3 +137,11 @@ Evidence candidate 不直接等于 verified anchor。服务端需要：
 - Human review：对歧义和高影响结论做最终决定。
 
 模型置信度不是事实正确性的保证。UI 应显示证据状态和审核状态，不应只显示一个百分比。
+
+
+## 9. Persistence mapping: candidates versus canonical objects
+
+- entity_candidate.v1 creates or updates an entity_mentions candidate first; canonical story_entities are resolved through a separate idempotent resolution step.
+- story_event.v1 yields a canonical event candidate plus one or more event_mentions, each bound to a specific chapter/split version.
+- plotline node references a source event mention when exact source location/order matters; it may reference a chapter-only node if no single event occurrence is appropriate.
+- All IDs supplied by the model are run-local keys until the server maps them to persisted UUIDs. The model must never invent database UUIDs.
