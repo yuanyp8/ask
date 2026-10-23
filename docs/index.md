@@ -46,6 +46,11 @@
 - [000001 初始化 schema](../migrations/000001_init_core.up.sql)
 - [000001 回滚 schema](../migrations/000001_init_core.down.sql)
 
+## 实证方法论与首卷标注
+
+- [超长网文深度拆解方法论 V1.0](methodology/01-long-serial-dissection-v1.md)（核心方法）
+- [《父可敌国》第一卷证据锚点与标注试验](methodology/02-first-volume-annotation-pilot.md)（真实样本/技术校验）
+
 ## 方法调研
 
 - [小说拆解与设计方法调研](research/01-narrative-methods-review.md)（通用方法论，辅助参考）
