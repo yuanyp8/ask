@@ -2,9 +2,11 @@
 
 ## 1. Product definition
 
-ASK is a structured workspace for reverse-engineering existing novels and designing coherent original long-form fiction. Its core asset is a versioned narrative model—not a chat transcript. Reading tutoring and manuscript drafting build on this foundation.
+ASK is a structured workspace focused first on modern Chinese long-form serialized web fiction: evidence-based reverse analysis and coherent original-serial design. Its core asset is a versioned narrative model—not a chat transcript. Reading tutoring and manuscript drafting build on this foundation.
 
 The first release validates two connected paths: evidence-backed reverse analysis of an existing novel, and structured forward design of an original novel. Full manuscript generation and advanced reading-tutor features follow later. Both paths reuse the same entity, event, plotline, outline, version and task foundations, while keeping source facts separate from planned fiction.
+
+Current research priority: million-character-plus serial narratives, with volume/arc/chapter structure, multi-volume threads, character/resource/knowledge state changes, and read-through-chapter spoiler boundaries. See [long-serial research](../research/02-modern-web-serial-narrative.md) and [long-serial functional design](../requirements/07-long-serial-core-functions.md). Earlier general-novel methods remain optional lenses, not default formulas.
 
 ## 2. Primary users and jobs
 
