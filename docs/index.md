@@ -8,6 +8,7 @@
 - [平台能力地图](requirements/01-platform-capabilities.md)
 - [核心用户旅程与异常流程](requirements/02-user-journeys.md)
 - [平台功能拆解与验收矩阵](requirements/03-functional-decomposition.md)
+- [超长连载：核心功能详设](requirements/07-long-serial-core-functions.md)
 - [平台模块详细设计](requirements/04-module-design.md)
 - [需求—设计—实现追踪矩阵](requirements/05-traceability-matrix.md)
 - [小说拆解与原创设计核心功能](requirements/06-novel-analysis-design-workflows.md)
@@ -38,6 +39,7 @@
 - [21 Transactional Outbox 详细设计](architecture/21-outbox-delivery.md)
 - [22 叙事知识模型与小说拆解流水线](architecture/22-narrative-knowledge-model.md)
 - [23 原创小说设计工作流](architecture/23-original-novel-design.md)
+- [24 超长连载领域模型提案（尚未迁移）](architecture/24-long-serial-domain-proposal.md)
 
 ## 数据库迁移
 
@@ -46,7 +48,13 @@
 
 ## 方法调研
 
-- [小说拆解与设计方法调研](research/01-narrative-methods-review.md)
+- [小说拆解与设计方法调研](research/01-narrative-methods-review.md)（通用方法论，辅助参考）
+- [现代网文超长连载叙事机制](research/02-modern-web-serial-narrative.md)（当前研究主线）
+- [网文黄金标注与验证计划](research/03-long-serial-evaluation-plan.md)
+
+## 当前研究重点
+
+**当前优先现代中文长篇连载**：先研究「六种长期叙事引擎 + 五类长期账本 + 卷/Arc/章多尺度结构 + 截止章节防剧透」，再用代表性网文开展人工标注验证；传统文学分析和通用三幕式模板暂列辅助方法。首期优先验证证据化拆书与分卷、线索、人物状态管理，并保留原创网文设计的计划模式。完整正文自动写作后置。
 
 ## 当前阶段说明
 
