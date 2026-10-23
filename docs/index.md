@@ -51,6 +51,8 @@
 - [小说拆解与设计方法调研](research/01-narrative-methods-review.md)（通用方法论，辅助参考）
 - [现代网文超长连载叙事机制](research/02-modern-web-serial-narrative.md)（当前研究主线）
 - [网文黄金标注与验证计划](research/03-long-serial-evaluation-plan.md)
+- [三本历史网文 EPUB 导入体检](research/04-three-historical-epub-import-audit.md)
+- [三书前四章的真实叙事标注试验](research/05-opening-four-chapter-pilot.md)
 
 ## 当前研究重点
 
