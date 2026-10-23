@@ -33,4 +33,33 @@ The first release prioritizes the reverse-analysis path. Reading and original-fi
 
 The repository starts as a greenfield project. Architecture and data-model decisions are being recorded before application scaffolding.
 
-See `docs/architecture/` for the design documents and `migrations/` for the initial PostgreSQL schema.
+See [docs/index.md](docs/index.md) for the complete product and technical design set, and `migrations/` for the PostgreSQL schema draft.
+
+
+## Architecture documents
+
+- [Product scope and MVP](docs/architecture/00-product-scope.md)
+- [Core domain model](docs/architecture/01-domain-model.md)
+- [PostgreSQL data model](docs/architecture/02-data-model.md)
+- [Asynchronous analysis pipeline](docs/architecture/03-analysis-pipeline.md)
+- [REST API contract](docs/architecture/04-api-contract.md)
+- [Implementation roadmap](docs/architecture/05-implementation-roadmap.md)
+
+## Database migrations
+
+- [Initial schema](migrations/000001_init_core.up.sql)
+- [Initial schema rollback](migrations/000001_init_core.down.sql)
+
+The migration is a design baseline and has not yet been validated against a running PostgreSQL instance. Treat it as reviewable implementation input, not a production-ready schema.
+
+
+## Design phase
+
+The repository is currently in requirements analysis and detailed design. No application scaffolding has started. All design docs and SQL are drafts until reviewed and validated.
+
+Start here:
+- [Design document index](docs/index.md)
+- [Platform capabilities](docs/requirements/01-platform-capabilities.md)
+- [Functional decomposition](docs/requirements/03-functional-decomposition.md)
+- [Field review](docs/architecture/07-field-review.md)
+- [Data dictionary](docs/architecture/15-data-dictionary.md)
