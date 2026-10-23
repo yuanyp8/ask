@@ -27,6 +27,12 @@
 | FR-ANL-011 | 主线/支线与线索账本 | plotlines, plotline_nodes, event_relations, artifacts | 09 API：故事线 | 故事线板、伏笔账本 | TEST-THREAD-* |
 | FR-WRITE-001/002 | 原创小说设计 | works, story_entities, story_events, plotlines, outline_sets, outline_nodes | 09 API：创作设计（需补齐 DTO） | 创作简报、人物关系、事件图、大纲工作台 | TEST-DESIGN-* |
 
+| FR-SERIAL-001/005 | 分卷与阶段目标 | Planned: volumes / narrative_arcs；现有 outline_sets/plotlines 可承载部分候选 | 概念 API 见 24 领域提案 | W02 卷地图、W09 连载节奏 | TEST-SERIAL-ARC-* |
+| FR-SERIAL-002 | 长期线索账本 | Planned: narrative_threads / thread_occurrences；现有 claims/evidence/plotline 候选 | 概念 API 见 24 领域提案 | W05 线索账本 | TEST-SERIAL-THREAD-* |
+| FR-SERIAL-003 | 人物/资源状态 | Planned: entity_state_deltas / world_rules | 概念 API 见 24 领域提案 | W06、W07 状态板 | TEST-SERIAL-STATE-* |
+| FR-SERIAL-004 | 截止章与防剧透 | Planned: serial_analysis_snapshots；现有 run/source/split 作为基线 | 新增 cutoff 语义待详设 | W01–W10 全局截止章 | TEST-SERIAL-CUTOFF-* |
+| FR-SERIAL-006 | 长篇原创设计 | planned outlines + planned events + arcs/threads | 概念 API 见 24 领域提案 | 原创网文设计工作台 | TEST-SERIAL-DESIGN-* |
+
 ## 2. 测试 ID 约定
 
 - TEST-PROJ：项目、成员和权限。
